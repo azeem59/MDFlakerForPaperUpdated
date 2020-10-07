@@ -6,7 +6,7 @@ from get_test_smells import get_test_smell_project, get_size_file
 from trace_cover import get_all_builds, get_failed_tests, diff_compare
 
 
-def connect(host="localhost", user="root", pw="root", db="flakiness_test"):
+def connect(host="localhost", user="root", pw="", db="detector"):
     return pymysql.connect(host, user, pw, db)  # url,username,password,database
 
 

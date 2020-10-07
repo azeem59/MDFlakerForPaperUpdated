@@ -320,7 +320,7 @@ def get_all_builds(project_owner, project_name, interval=0):
         response = requests.session()
         response.keep_alive = False
 
-        params = {'include': 'build.jobs,build.commit, build.branch', 'limit': 100, 'offset': offset,
+        params = {'include': 'build.jobs,build.commit', 'limit': 100, 'offset': offset,
                   'build.event_type': 'push', 'build.branch': 'master'}
         if not finish:
             try:
