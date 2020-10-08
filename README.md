@@ -26,12 +26,12 @@ Two of the factors, in this tool, depend on build history. This project facilita
 ####  2.3.1 Download and Process Build Logs from Travis CI
 The Travis build logs of the projects can be accessed through GitHub project. For example, if you visit "https://github.com/apache/incubator-superset" page, you will find ![size](pic/build_link.png) . Click here and it will take you to the build history. The following commands load it automatically.
 
-      command: python initialize.py --i init --p [project_under_test_path] --o [project_under_test_owner] --n [project_under_test_name] --l [limit]
+      command: python initialize.py --i init --p [project_under_test_path] --o [project_under_test_owner] --n [project_under_test_name] --l [NumberOfDays]
       
       --p: project under test local path
       --o: project under test owner on github
       --n: project under test name on github
-      --l: opptional, build history in the past [limit] days you want to get from Travis CI, default:0, get all the build history
+      --l: opptional, build history in the past [NumberOfDays] days (for example, 180, 365) you want to get from Travis CI, default:0, get all the build history
 
 For example, in the URL: https://github.com/apache/incubator-superset, the project owner is "apache", the project name is "incubator-superset" and local path could be where you cloned the project. 
 
@@ -165,6 +165,9 @@ The structure of JSON file is as follows:
     use "python show.py --help" to get details
 
 #### 2.4.1 test smells
+
+***** YOU SHOULD HAVE four COMMANDS similar to what you did in dependnacy coverage .  .**************
+
 ##### (1) show test smells distribution
       command: python show.py --type test_smell
       output: 1. table ['Test Case', 'Number of Smells', 'Path']
@@ -188,15 +191,16 @@ show latest failed build with failed tests:
 
       command: python show.py --type latest 
       
-      output: a table ['Failed Test Case', 'Coverage status', 'Build ID', 'Build Finished Time', 'Path']
+ ************     output: a table ['Failed Test Case', 'Coverage status (NC/C)', 'Build ID', 'Build Finished Time', 'Path']******************
 show dependency coverage of a certain build:
 
       command: python show.py --type latest --build_id [build id]
       
       output: a table ['Failed Test Case', 'Coverage status', 'Build ID', 'Build Finished Time', 'Path']
-The above command used all build history from DB.
 
-      command: python show.py --type dependency_cover 
+The below command used all build history from DB.
+
+      command: python show.py --type dependency_cover ******* can we write python show.py --type all/**** Just stay persistant in command structure********
       
       output: table ['Failed Test Case Name', 'Number of Times, the TC failed due to unrelated changes', 'Path', 'Last Failed Build ID']
    
