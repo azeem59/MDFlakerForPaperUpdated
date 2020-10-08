@@ -6,7 +6,7 @@ from get_test_smells import get_test_smell_project, get_size_file
 from trace_cover import get_all_builds, get_failed_tests, diff_compare
 
 
-def connect(host="localhost", user="root", pw="", db="detector"):
+def connect(host="localhost", user="root", pw="root", db="flakiness"):
     return pymysql.connect(host, user, pw, db)  # url,username,password,database
 
 
@@ -128,7 +128,7 @@ def save_case_and_smells(project_path):
                     for name, smell_list in smell.items():
                         num = 0  # test smell number
                         for sm in smell_list:
-                            num += sm[2]
+                            num += len(sm[3])
                             # insert test smells into table test_smells
                             for location in sm[3]:
                                 test_smell_number += 1
@@ -288,19 +288,19 @@ def search(sql):
 
 # factor 1: test case size
 def search_size_bigger_than(size):
-    sql = "SELECT tc.`NAME`,path, `size` FROM test_cases tc WHERE `size`>%s order by size desc " % size
+    sql = "SELECT tc.`NAME`, `size`, path FROM test_cases tc WHERE `size`>%s order by size desc " % size
     return search(sql)
 
 
 def search_size_between(start, end):
-    sql = "SELECT `NAME`,`PATH`,`SIZE`,`TEST_SMELLS` FROM test_cases " \
+    sql = "SELECT `NAME`,`SIZE`,`TEST_SMELLS`,`PATH` FROM test_cases " \
           "WHERE `SIZE` BETWEEN %s AND %s order by `SIZE` desc " % (start, end)
     return search(sql)
 
 
 # factor 2: test smell
 def search_test_smell():
-    sql = """SELECT `NAME`,PATH,test_smells AS test_smell_number 
+    sql = """SELECT `NAME`,test_smells AS test_smell_number,PATH 
              FROM test_cases 
              WHERE test_smells>0 
              ORDER BY test_smell_number DESC"""
@@ -365,6 +365,19 @@ def search_dependency_cover_F_count(days):
              WHERE DEPENDENCY_COVER="F" AND git_diff="Y" AND DATE_SUB(CURDATE(),INTERVAL %d DAY) <=CREATED_TIME
              GROUP BY FAILED_TEST_NAME 
              ORDER BY times DESC""" % days
+    return search(sql)
+
+
+def search_latest_failed_build(build_id):
+    if build_id == 0:
+        sql = """SELECT failed_test_name,DEPENDENCY_COVER, build_id,CREATED_TIME,path 
+                 FROM failed_tests 
+                 WHERE build_id = (SELECT build_id FROM build_history 
+                 WHERE STATUS=2 ORDER BY CREATED_TIME DESC LIMIT 1)"""
+    else:
+        sql = """SELECT failed_test_name,DEPENDENCY_COVER, build_id,CREATED_TIME,path 
+                 FROM failed_tests 
+                 WHERE build_id = %d""" % build_id
     return search(sql)
 
 

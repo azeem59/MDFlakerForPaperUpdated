@@ -308,11 +308,11 @@ class UrlVisitor(SmellVisitor):
                 self.results['count'] += 1
                 self.results['lines'].append(node.lineno)
 
-            if isinstance(n, ast.Name) and n.id == 'url':
+            elif isinstance(n, ast.Name) and n.id == 'url':
                 self.results['count'] += 1
                 self.results['lines'].append(node.lineno)
 
-            if isinstance(n, ast.Str) and 'http' in n.s:
+            elif isinstance(n, ast.Str) and 'http' in n.s:
                 self.results['count'] += 1
                 self.results['lines'].append(node.lineno)
 

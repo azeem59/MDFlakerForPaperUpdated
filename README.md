@@ -45,18 +45,129 @@ Note: use "python initialize.py --help" to get details of this command
 
 The structure of JSON file is as follows:
 
-***************PLEASE PROVIDE THE STRUCTURE ***************
+    <String: build id>: { 
+            "branch_name": <String: branch name>,
+            "id": <Integer: build id>,
+            "state": <String: build status(passed,failed)>,
+            "previous_state": <String: build status of the parent commit of this commit>,
+            "commit_sha": <String: commit SHA>,
+            "duration": <Integer: how long it takes to finish this build(seconds)>,
+            "finished_at": <String: when the build finished at>,
+            "failed_info": {  <Dict: it contains the info of failed tests, can be null>
+                "commit_sha": <String: commit SHA>,
+                "branch": <String: branch name>,
+                "build_id": <Integer: build id>,
+                "failed_tests": [ <List: it contains multiple Dicts,each Dict contains info of one failed test>
+                    {   <Dict: it conatins basic info of each failed test>
+                        "test_case": <String: test case name>,
+                        "test_class": <String: class of the test case, can be null>,
+                        "test_file": <Srting: which test file the test case belong to>,
+                        "test_dir": <String: relative directory of the test file>
+                    }
+                ],
+                "traceback": { <Dict: it contains traceback of each failed test, can be null>
+                    <String: test case name>: [  <List: it contains detail info of traceback of each failed test>
+                        [   <List: it contains 3 main info of traceback>
+                            <String: file path>,
+                            <String: The line number where the following code is>,
+                            <String: the code that caused the test to fail>
+                        ], 
+                    ]
+                }
+            }
+        }
+ JSON example:
+ 
+    "597008875": {
+        "branch_name": "master",
+        "id": 597008875,
+        "state": "passed",
+        "previous_state": "failed",
+        "commit_sha": "2117d1ef9d0ce041d91a75eba47d0b07dabed8c9",
+        "duration": 3850,
+        "finished_at": "2019-10-12T15:18:06Z",
+        "failed_info": {}
+    },
+    "596776418": {
+        "branch_name": "master",
+        "id": 596776418,
+        "state": "failed",
+        "previous_state": "failed",
+        "commit_sha": "03b35b3c1121bb452a7938ed92c6bede657377dd",
+        "duration": 3798,
+        "finished_at": "2019-10-11T20:52:37Z",
+        "failed_info": {
+            "commit_sha": "03b35b3c1121bb452a7938ed92c6bede657377dd",
+            "branch": "master",
+            "build_id": 596776418,
+            "failed_tests": [
+                {
+                    "test_case": "test_load_world_bank_health_n_pop",
+                    "test_class": "SupersetDataFrameTestCase",
+                    "test_file": "load_examples_test.py",
+                    "test_dir": "tests/"
+                }
+            ],
+            "traceback": {
+                "test_load_world_bank_health_n_pop": [
+                    [
+                        "/home/travis/build/apache/incubator-superset/tests/load_examples_test.py",
+                        "30",
+                        "test_load_world_bank_health_n_pop"
+                    ],
+                    [
+                        "/home/travis/build/apache/incubator-superset/superset/examples/world_bank.py",
+                        "51",
+                        "load_world_bank_health_n_pop"
+                    ],
+                    [
+                        "/home/travis/build/apache/incubator-superset/superset/examples/helpers.py",
+                        "72",
+                        "get_example_data"
+                    ],
+                    [
+                        "/opt/python/3.6.7/lib/python3.6/http/client.py",
+                        "462",
+                        "read"
+                    ],
+                    [
+                        "/opt/python/3.6.7/lib/python3.6/http/client.py",
+                        "612",
+                        "_safe_read"
+                    ],
+                    [
+                        "/opt/python/3.6.7/lib/python3.6/socket.py",
+                        "586",
+                        "readinto"
+                    ],
+                    [
+                        "/opt/python/3.6.7/lib/python3.6/ssl.py",
+                        "1012",
+                        "recv_into"
+                    ],
+                    [
+                        "/opt/python/3.6.7/lib/python3.6/ssl.py",
+                        "874",
+                        "read"
+                    ],
+                    [
+                        "/opt/python/3.6.7/lib/python3.6/ssl.py",
+                        "631",
+                        "read"
+                    ]
+                ]
+            }
+        }
+    },
 ### 2.4 Generate Output in Tables and Graphs
-    There are 2 ways to show data: charts and tables. Tables provide detailed information including test case names, paths, name of test smells and other information whereas charts provides high level quantitative information (*****UPDATE IT AS YOU WANT*********).
+    There are 2 ways to show data: charts and tables. Tables provide detailed information including test case names, paths, name of test smells and other information whereas charts provides high level quantitative information.
 
     use "python show.py --help" to get details
 
 #### 2.4.1 test smells
 ##### (1) show test smells distribution
       command: python show.py --type test_smell
-      ********* It should be CSV FIles. All taales should be in CSV files, create a special folder with name OutPUT **************
-      ******** Double Check the NUMBER of test Smells in both Grapgs***************
-      output: 1. table ['Test Case', 'Path', 'Number of Smells']
+      output: 1. table ['Test Case', 'Number of Smells', 'Path']
               2. 3 charts
    example output:
    ![smells](pic/smells.png)
@@ -66,34 +177,34 @@ The structure of JSON file is as follows:
 
  The above command will provides information for all test cases. In case, you want to limit to one speciofic test case, run the following command:
 
-      command: python show.py --type smell_details --test_case TestCaseName
-
-      ****** Generate CSV File *******
+      command: python show.py --type smell_details --test_case [TestCaseName]
       
       output: table ['Test Case', 'Number of Smells', 'Smell type', 'Tip', 'Location', 'Path']
 
 #### 2.4.2 dependency coverage (Think about other name -- I will also think)
 ***** YOU SHOULD HAVE TWO COMMANDS. ONE COMMAND GIVES RESULTS ABOUT THE TEST CASES THAT WERE FAILED IN THE LAST/LATEST BUILD ONLY. May be you can pass the parameter as "--days" where "0" means last failed build, "leaving it empty" means alll failed builds or "Any Number" means days.************** 
 
-For example:
+show latest failed build with failed tests: 
 
-below is a correct table:
-*********Failed Test Case Name - Coveragge Status (0 for failed with related changes and 1 for failed with unrelated changes) - Latest BuildID********
+      command: python show.py --type latest 
+      
+      output: a table ['Failed Test Case', 'Coverage status', 'Build ID', 'Build Finished Time', 'Path']
+show dependency coverage of a certain build:
 
+      command: python show.py --type latest --build_id [build id]
+      
+      output: a table ['Failed Test Case', 'Coverage status', 'Build ID', 'Build Finished Time', 'Path']
+The above command used all build history from DB.
 
       command: python show.py --type dependency_cover 
+      
+      output: table ['Failed Test Case Name', 'Number of Times, the TC failed due to unrelated changes', 'Path', 'Last Failed Build ID']
    
-   The above command used all build history from DB. If you want to limit the number of days, use the following command:
+If you want to limit the number of days, use the following command:
 
-      command: python show.py --type dependency_cover --days NumberOfDays
-       ******UPDATE THE FOLLOWING COLUMN NAME IN THE FILE  AND GENRATE THE CSV FILE ************
-       output: 1. table ['Failed Test Case Name', 'Number of Times, the TC failed due to unrelated changes', 'Path', 'Last Failed Build ID'] ** look above ***
-               2. chart
-                  dependency_cover_T: test case failed and the traceback covered code changes
-                  git_diff_N: can not get code changes from github, corrasponding dependency_cover is F(False)
-                  dependency_cover_F&git_diff_Y: traceback did not cover code changes and successfully got code changes from github
-   example output:
-   ![dependency coverage](pic/dependency_cover.png) . . **** No Graph ******
+      command: python show.py --type dependency_cover --days [Number Of Days]
+
+       output: table ['Failed Test Case Name', 'Number of Times, the TC failed due to unrelated changes', 'Path', 'Last Failed Build ID']
 
 #### 2.4.3 Test case history
 

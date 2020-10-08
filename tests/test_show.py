@@ -31,6 +31,11 @@ def test_show_dependency_cover():
     show.show_dependency_cover(days)
 
 
+def test_show_latest():
+    build_id = 675313645
+    show.show_latest_dependency_cover(build_id)
+
+
 def test_show_build_history():
     days = 1080
     show.show_build_history()
