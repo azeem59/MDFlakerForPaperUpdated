@@ -42,4 +42,9 @@ def test_show_build_history():
 
 
 def test_show_flakiness_score():
-    show.show_flakiness_score()
+    show.show_flakiness_score('all')
+
+
+def test_show_flakiness_score_one():
+    build_id = 0
+    show.show_flakiness_score_one(build_id)

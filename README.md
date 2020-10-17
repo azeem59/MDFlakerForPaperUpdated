@@ -166,10 +166,8 @@ The structure of JSON file is as follows:
 
 #### 2.4.1 test smells
 
-***** YOU SHOULD HAVE four COMMANDS similar to what you did in dependnacy coverage .  .**************
-
 ##### (1) show test smells distribution
-      command: python show.py --type test_smell
+      command: python show.py --type smell
       output: 1. table ['Test Case', 'Number of Smells', 'Path']
               2. 3 charts
    example output:
@@ -178,37 +176,38 @@ The structure of JSON file is as follows:
 
       command: python show.py --type smell_details 
 
- The above command will provides information for all test cases. In case, you want to limit to one speciofic test case, run the following command:
+ The above command will provides information for all test cases. In case, you want to limit to one specific test case, run the following command:
 
       command: python show.py --type smell_details --test_case [TestCaseName]
       
       output: table ['Test Case', 'Number of Smells', 'Smell type', 'Tip', 'Location', 'Path']
 
 #### 2.4.2 dependency coverage (Think about other name -- I will also think)
-***** YOU SHOULD HAVE TWO COMMANDS. ONE COMMAND GIVES RESULTS ABOUT THE TEST CASES THAT WERE FAILED IN THE LAST/LATEST BUILD ONLY. May be you can pass the parameter as "--days" where "0" means last failed build, "leaving it empty" means alll failed builds or "Any Number" means days.************** 
 
 show latest failed build with failed tests: 
 
-      command: python show.py --type latest 
+      command: python show.py --type dc_one
       
- ************     output: a table ['Failed Test Case', 'Coverage status (NC/C)', 'Build ID', 'Build Finished Time', 'Path']******************
+ ************     output: a table ['Failed Test Case', 'Coverage status (F/T)', 'Build ID', 'Build Finished Time', 'Path']******************
 show dependency coverage of a certain build:
 
-      command: python show.py --type latest --build_id [build id]
+      command: python show.py --type dc_one --build_id [build id]
       
       output: a table ['Failed Test Case', 'Coverage status', 'Build ID', 'Build Finished Time', 'Path']
 
 The below command used all build history from DB.
 
-      command: python show.py --type dependency_cover ******* can we write python show.py --type all/**** Just stay persistant in command structure********
+      command: python show.py --type dc_all ******* can we write python show.py --type all/**** Just stay persistant in command structure********
       
-      output: table ['Failed Test Case Name', 'Number of Times, the TC failed due to unrelated changes', 'Path', 'Last Failed Build ID']
+      output: table ['Failed Test Case Name', 'NT-FDUC', 'Path', 'Last Failed Build ID']
+      
+      note: NT-FDUC = Number of Times, It failed due to unrelated changes in past
    
 If you want to limit the number of days, use the following command:
 
-      command: python show.py --type dependency_cover --days [Number Of Days]
+      command: python show.py --type dc_all --days [Number Of Days]
 
-       output: table ['Failed Test Case Name', 'Number of Times, the TC failed due to unrelated changes', 'Path', 'Last Failed Build ID']
+       output: table ['Failed Test Case Name', 'NT-FDUC', 'Path', 'Last Failed Build ID']
 
 #### 2.4.3 Test case history
 
@@ -218,7 +217,7 @@ If you want to limit the number of days, use the following command:
 
  One command only give information of test cases from the last failed build in NumberOfDays (whatever user enter), other command give information of all test cases in repo in NumberOfDays (whatever user enter)
 
-        command: python show.py --type build_history --days NumberOfDays . . *** can we rename "build_histroy" tp "testcase_history"
+        command: python show.py --type testcase_history --days NumberOfDays . . *** can we rename "build_histroy" tp "testcase_history"
         
         --days is opptional, days means get the data generated whin X days; default 3600
         
@@ -244,12 +243,21 @@ If you want to limit the number of days, use the following command:
 
 
 #### 2.4.5 flakiness score
-        command: python show.py --type flakiness_score
+
+get flakiness score and other info of one build, default get latest failed build
+
+        command: python show.py --tyoe fs_one --build_id [build id]
+        
+        output: table ['Build ID', 'Test Case', 'Score', 'NT-FDUC', 'Size', 'Number of Test Smells', 'Dependency Cover', 'Path']
+        
+get all flakiness score of all the failed tests.
+        
+        command: python show.py --type fs_all
         
         How to get flakiness score:
             score = falied_times*0.2 + (size > 30 ?size - 29 : 0) * 0.05
                     + test_smell_numver * 0.4 + (dependency_cover == 'F'?2 : 0)
-        output: 1. table ['Test Case', 'Score', 'Failed Times', 'Size', 'Number of Test Smells', 'Recent Dependency Cover', 'Path']
+        output: 1. table ['Test Case', 'Score', 'NT-FDUC', 'Size', 'Number of Test Smells', 'Latest Dependency Cover', 'Latest Failed build_id', 'Path']
                 2. chart
    example output:
    ![flakiness score](pic/flakiness_score.png)    

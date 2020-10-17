@@ -401,14 +401,45 @@ def search_build_status(days):
 
 
 # flakiness score
-def flakiness_score():
-    sql = """SELECT tc.`NAME`,COUNT(ft.`FAILED_TEST_NAME`) AS failed_times,tc.`SIZE`,tc.`TEST_SMELLS`, 
-             ft.`DEPENDENCY_COVER` AS recent_cover, ft.git_diff,ft.`BUILD_ID` AS recent_failed_build_id,tc.`PATH`
-             FROM test_cases tc LEFT JOIN failed_tests ft 
-             ON tc.`NAME`=ft.`FAILED_TEST_NAME`
-             GROUP BY tc.`NAME`
-             ORDER BY failed_times DESC"""
+def flakiness_score(test_case):
+    if test_case == 'all':
+        sql = """SELECT tc.`NAME`,COUNT(ft.`FAILED_TEST_NAME`) AS failed_times,tc.`SIZE`,tc.`TEST_SMELLS`, 
+                 ft.`DEPENDENCY_COVER` AS recent_cover, ft.git_diff,ft.`BUILD_ID` AS recent_failed_build_id,tc.`PATH`
+                 FROM test_cases tc LEFT JOIN (SELECT * FROM failed_tests WHERE DEPENDENCY_COVER='F') ft 
+                 ON tc.`NAME`=ft.`FAILED_TEST_NAME`
+                 GROUP BY tc.`NAME`
+                 ORDER BY failed_times DESC"""
+    else:
+        sql = """SELECT tc.`NAME`,COUNT(ft.`FAILED_TEST_NAME`) AS failed_times,tc.`SIZE`,tc.`TEST_SMELLS`, 
+                 ft.`DEPENDENCY_COVER` AS recent_cover, ft.git_diff,ft.`BUILD_ID` AS recent_failed_build_id,tc.`PATH`
+                 FROM test_cases tc right JOIN (SELECT * FROM failed_tests WHERE DEPENDENCY_COVER='F') ft 
+                 ON tc.`NAME`=ft.`FAILED_TEST_NAME`
+                 where ft.`FAILED_TEST_NAME` = '%s'
+                 GROUP BY tc.`NAME`
+                 ORDER BY failed_times DESC""" % test_case
     return search(sql)
+
+
+def flakiness_score_one(build_id):
+    failed_tests = search_latest_failed_build(build_id)
+    flakiness_list = []
+    if failed_tests:
+        for f in failed_tests:
+            score_dic = {}
+            r = flakiness_score(f[0])
+            if r:
+                size_score = 0
+                smell_score = 0
+                if r[0][2]:
+                    size_score = r[0][2] - 29 if r[0][2] > 30 else 0
+                if r[0][3]:
+                    smell_score = r[0][3] * 0.4
+                score = r[0][1] * 0.2 + size_score + smell_score + (2 if r[0][4] == 'F' else 0)
+                score_dic[f[0]] = {'failed_times': r[0][1], 'size': r[0][2], 'test_smells': r[0][3],
+                                   'dependency_cover': f[1], 'build_id': f[2], 'path': r[0][7], 'score': score}
+                flakiness_list.append(score_dic)
+
+    return flakiness_list
 
 
 '''

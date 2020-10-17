@@ -5,6 +5,7 @@ from prettytable import PrettyTable
 import click
 import datetime
 import os
+from pathlib import Path
 
 
 def save_csv(file_path, headers, rows):
@@ -16,17 +17,25 @@ def save_csv(file_path, headers, rows):
         print('save data to csv done!')
 
 
-def combine_csv_path(file_name):
+def combine_csv_path(folder, file_name):
     now = datetime.datetime.now()
     file_name = file_name + '_' + datetime.datetime.strftime(now, '%Y-%m-%d_%H-%M-%S') + '.csv'
-    file_path = os.path.abspath(os.path.join(os.getcwd(), "..")) + '\\output\\csv\\' + file_name
+    last_folder = Path(os.path.abspath(os.path.join(os.getcwd(), "..")))
+    file_dir = last_folder / 'output' / 'csv' / folder
+    if not os.path.exists(file_dir):
+        os.mkdir(file_dir)
+    file_path = file_dir / file_name
     return file_path
 
 
-def combine_image_path(image_name):
+def combine_image_path(folder, image_name):
     now = datetime.datetime.now()
     file_name = image_name + '_' + datetime.datetime.strftime(now, '%Y-%m-%d_%H-%M-%S') + '.jpg'
-    file_path = os.path.abspath(os.path.join(os.getcwd(), "..")) + '\\output\\image\\' + file_name
+    last_folder = Path(os.path.abspath(os.path.join(os.getcwd(), "..")))
+    file_dir = last_folder / 'output' / 'image' / folder
+    if not os.path.exists(file_dir):
+        os.mkdir(file_dir)
+    file_path = file_dir / file_name
     return file_path
 
 
@@ -47,7 +56,7 @@ def show_size():
     plt.bar(x_label, result)
     for a, b in zip(x_label, result):
         plt.text(a, b + 1, '%.0f' % b, ha='center', va='bottom')
-    image_path = combine_image_path(name)
+    image_path = combine_image_path('size', name)
     plt.savefig(image_path)
     print('save image done!')
     plt.show()
@@ -58,7 +67,7 @@ def show_size_bigger_than(size=30):
     print("count: " + str(len(results)))
     headers = ['Test Case', 'Size', 'Path']
     file_name = 'size_bigger_than_' + str(size)
-    file_path = combine_csv_path(file_name)
+    file_path = combine_csv_path('size', file_name)
     save_csv(file_path, headers, results)
     table = PrettyTable(headers)
     for s in results:
@@ -74,7 +83,7 @@ def show_size_between(start=30, end=50):
     print("count: " + str(len(results)))
     headers = ['Test Case', 'Size', 'Test Smells', 'Path']
     file_name = 'size_between_' + str(start) + '&' + str(end)
-    file_path = combine_csv_path(file_name)
+    file_path = combine_csv_path('size', file_name)
     save_csv(file_path, headers, results)
     table = PrettyTable(headers)
     for r in results:
@@ -130,10 +139,11 @@ def show_smell():
         for a, b in zip(x_label, y_value):
             bar3.text(a, b + 1, '%d' % b, ha='center', va='bottom')
 
+    folder = 'test_smell'
     results = mh.search_test_smell()
     headers = ['Test Case', 'Number of Smells', 'Path']
     file_name = 'test_smell_count'
-    file_path = combine_csv_path(file_name)
+    file_path = combine_csv_path(folder, file_name)
     save_csv(file_path, headers, results)
     table = PrettyTable(headers)
     print("count: " + str(len(results)))
@@ -143,7 +153,7 @@ def show_smell():
     show_smell_1()
     show_smell_2()
     show_smell_type()
-    image_path = combine_image_path('Test_Smell_Distribution')
+    image_path = combine_image_path(folder, 'Test_Smell_Distribution')
     plt.savefig(image_path)
     print('save image done!')
     plt.show()
@@ -153,7 +163,7 @@ def show_smell_details(test_case="all"):
     results = mh.search_smell_details(test_case)
     headers = ['Test Case', 'Number of Smells', 'Smell type', 'Tip', 'Location', 'Path']
     file_name = 'test_smell_details' + '__' + test_case
-    file_path = combine_csv_path(file_name)
+    file_path = combine_csv_path('test_smell', file_name)
     save_csv(file_path, headers, results)
     table = PrettyTable(headers)
     for r in results:
@@ -180,10 +190,10 @@ def show_dependency_cover(days=3600):
     #     plt.show()
 
     def show_F_count():
-        headers = ['Failed Test Case', 'Number of Times, the TC failed due to unrelated changes',
+        headers = ['Failed Test Case', 'NT-FDUC',
                    'Path', 'Latest Failed Build ID']
         file_name = 'Dependency_Cover'
-        file_path = combine_csv_path(file_name)
+        file_path = combine_csv_path('dependency_cover', file_name)
         save_csv(file_path, headers, dependency_cover_F_count)
         table = PrettyTable(headers)
         for r in dependency_cover_F_count:
@@ -199,7 +209,7 @@ def show_latest_dependency_cover(build_id=0):
     if results:
         headers = ['Failed Test Case', 'Coverage status', 'Build ID', 'Build Finished Time', 'Path']
         file_name = results[0][2] + '_dependency_cover'
-        file_path = combine_csv_path(file_name)
+        file_path = combine_csv_path('dependency_cover', file_name)
         save_csv(file_path, headers, results)
         table = PrettyTable(headers)
         for r in results:
@@ -212,6 +222,7 @@ def show_latest_dependency_cover(build_id=0):
 def show_build_history(days=3600):
     failed_tests = mh.search_failed_times(days)
     build_status = mh.search_build_status(days)
+    folder = 'build_history'
 
     def show_status():
         x_label = ['passed', 'failed without failed tests', 'failed with failed tests']
@@ -226,7 +237,7 @@ def show_build_history(days=3600):
         for a, b in zip(x_label, y_value):
             plt.text(a, b + 1, '%d' % b, ha='center', va='bottom')
 
-        image_path = combine_image_path("Build_History_Status_Distribution" + "(within_" + str(days) + "_days)")
+        image_path = combine_image_path(folder, "Build_History_Status_Distribution" + "(within_" + str(days) + "_days)")
         plt.savefig(image_path)
 
         plt.show()
@@ -234,7 +245,7 @@ def show_build_history(days=3600):
     def show_failed_times():
         headers = ['Failed Test Name', 'Failed Times', 'Path']
         file_name = 'Test_Case_failed_times'
-        file_path = combine_csv_path(file_name)
+        file_path = combine_csv_path(folder, file_name)
         save_csv(file_path, headers, failed_tests)
         table = PrettyTable(['Failed Test Name', 'Failed Times', 'Path'])
         for r in failed_tests:
@@ -245,8 +256,29 @@ def show_build_history(days=3600):
     show_status()
 
 
-def show_flakiness_score():
-    results = mh.flakiness_score()
+def show_flakiness_score_one(build_id):
+    flakiness_list = mh.flakiness_score_one(build_id)
+    headers = ['Build ID', 'Test Case', 'Score', 'NT-FDUC', 'Size', 'Number of Test Smells', 'Dependency Cover', 'Path']
+    table = PrettyTable(headers)
+    rows = []
+    if flakiness_list:
+        for f in flakiness_list:
+            for k, v in f.items():
+                temp = [v['build_id'], k, v['score'], v['failed_times'], v['size'], v['test_smells'],
+                        v['dependency_cover'], v['path']]
+                table.add_row(temp)
+                rows.append(temp)
+        folder = 'flakiness_score'
+        file_name = 'Flakiness_Score_' + str(build_id)
+        file_path = combine_csv_path(folder, file_name)
+        save_csv(file_path, headers, rows)
+        print(table.get_string(sortby="Score", reversesort=True))
+    else:
+        print('Build passed or build failed without failed tests or no such build')
+
+
+def show_flakiness_score(test_case):
+    results = mh.flakiness_score(test_case)
     score_dic = {}
     x_label = ['0', '0-1', '1-2', '2-3', '3-5', '5-7', '7-9', '>9']
     y_value = [0, 0, 0, 0, 0, 0, 0, 0]
@@ -279,30 +311,32 @@ def show_flakiness_score():
     for a, b in zip(x_label, y_value):
         plt.text(a, b + 1, '%d' % b, ha='center', va='bottom')
 
-    table = PrettyTable(
-        ['Test Case', 'Score', 'Failed Times', 'Size', 'Number of Test Smells', 'Recent Dependency Cover',
-         'Recent Failed build_id', 'Path'])
+    headers = ['Test Case', 'Score', 'NT-FDUC', 'Size', 'Number of Test Smells', 'Latest Dependency Cover',
+               'Latest Failed build_id', 'Path']
+    table = PrettyTable(headers)
+
     rows = []
     for key, value in score_dic.items():
         temp = [key, value['score'], value['failed_times'], value['size'], value['test_smells'], value['recent_cover'],
                 value['build_id'], value['path']]
         table.add_row(temp)
         rows.append(temp)
-    headers = ['Failed Test Name', 'Failed Times', 'Path']
+
+    folder = 'flakiness_score'
     file_name = 'Flakiness_Score'
-    file_path = combine_csv_path(file_name)
+    file_path = combine_csv_path(folder, file_name)
     save_csv(file_path, headers, rows)
     print(table.get_string(sortby="Score", reversesort=True))
 
-    image_path = combine_image_path("Flakiness_Score_Distribution")
+    image_path = combine_image_path(folder, "Flakiness_Score_Distribution")
     plt.savefig(image_path)
 
     plt.show()
 
 
 @click.command()
-@click.option('--type', type=click.Choice(['size', 'size_bigger_than', 'size_between', 'test_smell', 'smell_details',
-                                           'dependency_cover', 'build_history', 'flakiness_score', 'latest']),
+@click.option('--type', type=click.Choice(['size', 'size_bigger_than', 'size_between', 'smell', 'smell_details',
+                                           'dc_all', 'dc_one', 'testcase_history', 'fs_all', 'fs_one']),
               help='the type of data that you want to check')
 @click.option('--size', type=int, help='you need set size when you choose size_bigger_than')
 @click.option('--between', nargs=2, type=int, help='you need set start and end when you choose size_between')
@@ -323,17 +357,19 @@ def main(type, size, between, test_case, days, build_id):
         show_size_bigger_than(size=size)
     elif type == 'size_between':
         show_size_between(between[0], between[1])
-    elif type == 'test_smell':
+    elif type == 'smell':
         show_smell()
     elif type == 'smell_details':
         show_smell_details(test_case)
-    elif type == 'dependency_cover':
+    elif type == 'dc_all':
         show_dependency_cover(days)
-    elif type == 'build_history':
+    elif type == 'testcase_history':
         show_build_history(days)
-    elif type == 'flakiness_score':
-        show_flakiness_score()
-    elif type == 'latest':
+    elif type == 'fs_all':
+        show_flakiness_score(test_case)
+    elif type == 'fs_one':
+        show_flakiness_score_one(build_id)
+    elif type == 'dc_one':
         show_latest_dependency_cover(build_id)
 
 
