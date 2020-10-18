@@ -404,14 +404,14 @@ def search_build_status(days):
 def flakiness_score(test_case):
     if test_case == 'all':
         sql = """SELECT tc.`NAME`,COUNT(ft.`FAILED_TEST_NAME`) AS failed_times,tc.`SIZE`,tc.`TEST_SMELLS`, 
-                 ft.`DEPENDENCY_COVER` AS recent_cover, ft.git_diff,ft.`BUILD_ID` AS recent_failed_build_id,tc.`PATH`
+                 ft.`DEPENDENCY_COVER` AS recent_cover, ft.git_diff,ft.`BUILD_ID` AS recent_failed_build_id,tf.`PATH`
                  FROM test_cases tc LEFT JOIN (SELECT * FROM failed_tests WHERE DEPENDENCY_COVER='F') ft 
                  ON tc.`NAME`=ft.`FAILED_TEST_NAME`
                  GROUP BY tc.`NAME`
                  ORDER BY failed_times DESC"""
     else:
         sql = """SELECT tc.`NAME`,COUNT(ft.`FAILED_TEST_NAME`) AS failed_times,tc.`SIZE`,tc.`TEST_SMELLS`, 
-                 ft.`DEPENDENCY_COVER` AS recent_cover, ft.git_diff,ft.`BUILD_ID` AS recent_failed_build_id,tc.`PATH`
+                 ft.`DEPENDENCY_COVER` AS recent_cover, ft.git_diff,ft.`BUILD_ID` AS recent_failed_build_id,ft.`PATH`
                  FROM test_cases tc right JOIN (SELECT * FROM failed_tests WHERE DEPENDENCY_COVER='F') ft 
                  ON tc.`NAME`=ft.`FAILED_TEST_NAME`
                  where ft.`FAILED_TEST_NAME` = '%s'
