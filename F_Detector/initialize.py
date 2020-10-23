@@ -69,7 +69,7 @@ def initialize_json(p, json_file):
 @click.option('--p', help='project path')
 @click.option('--o', help='project owner on github')
 @click.option('--n', help='project name on github')
-@click.option('--l', type=int, default=0, help='number of build history you want to get from Travis CI')
+@click.option('--l', type=int, default=3600, help='get the build history within [l] days')
 def main(i, p, o, n, l, j):
     if i == 'init':
         initialize(p, o, n, l)

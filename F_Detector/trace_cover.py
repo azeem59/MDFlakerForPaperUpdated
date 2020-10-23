@@ -300,7 +300,7 @@ def diff_compare(project_path, sha, traceback):
     return diff_dic
 
 
-def get_all_builds(project_owner, project_name, interval=0):
+def get_all_builds(project_owner, project_name, interval=3600):
     url = 'https://api.travis-ci.org/repo/' + project_owner + '%2F' + \
           project_name + '/builds'
     offset = 0
@@ -310,7 +310,7 @@ def get_all_builds(project_owner, project_name, interval=0):
     param1 = {'include': 'build.jobs,build.commit', 'limit': 1, 'build.event_type': 'push', 'build.branch': 'master'}
     first_build = requests.get(url, headers={'Travis-API-Version': '3'}, params=param1).json()
     count = first_build['@pagination']['count'] - 1  # if limit is 0, set limit max builds
-
+    print(count)
     # build_number = 200
     t1 = time.time()
     print("getting build history from Travis ci......")
@@ -321,7 +321,7 @@ def get_all_builds(project_owner, project_name, interval=0):
         response.keep_alive = False
 
         params = {'include': 'build.jobs,build.commit', 'limit': 100, 'offset': offset,
-                  'build.event_type': 'push', 'build.branch': 'master'}
+                  'build.event_type': 'push'}
         if not finish:
             try:
                 builds = response.get(url, headers={'Travis-API-Version': '3'}, params=params).json()
