@@ -6,7 +6,7 @@ from get_test_smells import get_test_smell_project, get_size_file
 from trace_cover import get_all_builds, get_failed_tests, diff_compare
 
 
-def connect(host="localhost", user="root", pw="root", db="django-rest-framework"):
+def connect(host="localhost", user="root", pw="root", db="spacy"):
     return pymysql.connect(host, user, pw, db)  # url,username,password,database
 
 
@@ -404,7 +404,7 @@ def search_build_status(days):
 def flakiness_score(test_case):
     if test_case == 'all':
         sql = """SELECT tc.`NAME`,COUNT(ft.`FAILED_TEST_NAME`) AS failed_times,tc.`SIZE`,tc.`TEST_SMELLS`, 
-                 ft.`DEPENDENCY_COVER` AS recent_cover, ft.git_diff,ft.`BUILD_ID` AS recent_failed_build_id,tf.`PATH`
+                 ft.`DEPENDENCY_COVER` AS recent_cover, ft.git_diff,ft.`BUILD_ID` AS recent_failed_build_id,ft.`PATH`
                  FROM test_cases tc LEFT JOIN (SELECT * FROM failed_tests WHERE DEPENDENCY_COVER='F') ft 
                  ON tc.`NAME`=ft.`FAILED_TEST_NAME`
                  GROUP BY tc.`NAME`
