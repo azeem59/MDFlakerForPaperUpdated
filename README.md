@@ -161,7 +161,7 @@ The structure of JSON file is as follows:
     },
 ### 2.4 Generate Output in Tables and Graphs
     There are 2 ways to show data: charts and tables. Tables provide detailed information including test case names, paths, name of test smells and other information whereas charts provides high level quantitative information.
-
+    Every table will be saved as a csv file to output/csv and every chart will be saved as a image to output/image
     use "python show.py --help" to get details
 
 #### 2.4.1 test smells
