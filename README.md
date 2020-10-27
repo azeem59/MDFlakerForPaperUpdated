@@ -242,7 +242,7 @@ show test case failed history:
 
 get flakiness score and other info of one build, default get latest failed build
 
-        command: python show.py --tyoe fs_one --build_id [build id]
+        command: python show.py --type fs_one --build_id [build id]
         
         output: table ['Build ID', 'Test Case', 'Score', 'NT-FDUC', 'Size', 'Number of Test Smells', 'Dependency Cover', 'Path']
         
