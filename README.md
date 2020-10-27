@@ -217,10 +217,11 @@ If you want to limit the number of days, use the following command:
 
  One command only give information of test cases from the last failed build in NumberOfDays (whatever user enter), other command give information of all test cases in repo in NumberOfDays (whatever user enter)
 
-        command: python show.py --type testcase_history --days NumberOfDays . . *** can we rename "build_histroy" tp "testcase_history"
+        command: python show.py --type testcase_history --days NumberOfDays . . 
         
         --days is opptional, days means get the data generated whin X days; default 3600
         
+        output: 1. table ['Failed Test Name', 'Failed Times', 'Path']
        
                 2. chart
    example output:
