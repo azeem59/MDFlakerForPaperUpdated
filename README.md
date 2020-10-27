@@ -188,7 +188,6 @@ show latest failed build with failed tests:
 
       command: python show.py --type dc_one
       
- ************     output: a table ['Failed Test Case', 'Coverage status (F/T)', 'Build ID', 'Build Finished Time', 'Path']******************
 show dependency coverage of a certain build:
 
       command: python show.py --type dc_one --build_id [build id]
@@ -211,11 +210,7 @@ If you want to limit the number of days, use the following command:
 
 #### 2.4.3 Test case history
 
-**** We need two tables so does two commands. One tables should only present test cases failed in the last build. The other table should present all test cases in the repo.****
-
- *********output: 1. table ['Failed Test Name', 'Number of Times, It failed due to unrelated changes in past', 'Path']**********
-
- One command only give information of test cases from the last failed build in NumberOfDays (whatever user enter), other command give information of all test cases in repo in NumberOfDays (whatever user enter)
+show test case failed history:
 
         command: python show.py --type testcase_history --days NumberOfDays . . 
         
