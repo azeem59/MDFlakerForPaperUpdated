@@ -312,7 +312,8 @@ class UrlVisitor(SmellVisitor):
                 self.results['count'] += 1
                 self.results['lines'].append(node.lineno)
 
-            elif isinstance(n, ast.Str) and 'http' in n.s:
+            elif isinstance(n, ast.Str) and \
+                    ('http' in n.s or 'https' in n.s or 'www.' in n.s or '.org' in n.s or '.com' in n.s):
                 self.results['count'] += 1
                 self.results['lines'].append(node.lineno)
 
@@ -503,7 +504,7 @@ class ForInRange(TestSmell):
 
     def __init__(self):
         self.flakiness_type = 'Training'
-        self.flakiness_name = 'For _ in range'
+        self.flakiness_name = 'For in range'
         self.visitor = ForInRangeVisitor()
 
 
@@ -514,7 +515,7 @@ class ForInRangeVisitor(SmellVisitor):
         if isinstance(node.iter, ast.Call):
             call = get_call(node.iter)
             if call and isinstance(node.target, ast.Name):
-                if 'range' in call and node.target.id in ['_', '*']:
+                if 'range' in call:
                     self.results['count'] += 1
                     self.results['lines'].append(node.lineno)
 
@@ -716,8 +717,11 @@ if __name__ == '__main__':
     # test_file = get_test_files(path)
     # for file in test_file:
     #     print(file)
-    file_path = r'D:\CoursesResources\MasterThesis\Python_projects\pandas\pandas\tests\test_nanops.py'
+    file_path = r'D:\CoursesResources\MasterThesis\Python_projects\incubator-superset\tests\sqllab_tests.py'
     # test_files = get_test_files(path)
+    res = get_test_smell_file(file_path)
+    for r in res:
+        print(r)
     time1 = time.time()
     # for file in test_files:
     #     with open(file, encoding='gb18030', errors='ignore') as f:
@@ -726,8 +730,8 @@ if __name__ == '__main__':
     #     for method in methods:
     #         print(file, method[0], method[1].name)
     # time2 = time.time()
-    smell_project = get_test_smell_project(path)
-    for key, value in smell_project.items():
-        print(key, value)
-    time2 = time.time()
-    print('time: ' + str(time2 - time1))
+    # smell_project = get_test_smell_project(path)
+    # for key, value in smell_project.items():
+    #     print(key, value)
+    # time2 = time.time()
+    # print('time: ' + str(time2 - time1))

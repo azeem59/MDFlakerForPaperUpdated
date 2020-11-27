@@ -35,3 +35,8 @@ def test_smell_distribution():
         print(smell_number, count)
 
 
+def test_search_file():
+    project_path = r'D:\CoursesResources\MasterThesis\Python_projects\spaCy\spacy\tests'
+    file = r'test_tokenizer.py'
+    print(mh.search_file(project_path, file))
+

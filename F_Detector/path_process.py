@@ -14,10 +14,11 @@ def get_abspath(project_path, relative_path, file):
             relative_path = relative_path.replace('/', '\\')
     else:
         system_path = '/'
+    path = relative_path + system_path + file
     for relpath, dirs, files in os.walk(project_path):
         if file in files:
             full_path = os.path.join(project_path, relpath, file)
-            if relative_path + system_path + file in full_path:
+            if full_path.endswith(path):
                 # print(full_path)
                 return full_path
 
@@ -35,5 +36,9 @@ def get_test_files(project_path):
     return test_files_list
 
 
-
+if __name__ == '__main__':
+    project_path = r'D:\CoursesResources\MasterThesis\Python_projects\spaCy\spacy'
+    rel = r'sv/'
+    file = 'test_tokenizer.py'
+    print(get_abspath(project_path, rel, file))
 

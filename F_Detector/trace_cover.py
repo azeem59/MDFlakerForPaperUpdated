@@ -1,13 +1,10 @@
 import datetime
 import traceback
-
 import requests
 import re
 import time
 import math
 import json
-import random
-from changes_github import get_diff
 
 
 class BuildAnalyzer:
@@ -45,8 +42,6 @@ class BuildAnalyzer:
 
             if not self.failed_tests:
                 log_url = 'https://api.travis-ci.org/v3/job/' + str(job) + '/log.txt'
-                wait = random.uniform(1, 2)
-                time.sleep(wait)
                 try:
                     log = requests.get(log_url).text
                     # log = r['content']
@@ -59,10 +54,11 @@ class BuildAnalyzer:
                         temp_failed_test = ''
                         for line in log:
                             line = line.strip()
-                            if line.startswith("FAIL:") or line.startswith('[fail]') or line.endswith('FAILED'):
+                            if (line.startswith("FAIL:") and 'test' in line) or line.startswith(
+                                    '[fail]') or line.endswith('FAILED'):
                                 # print('1: '+line)
                                 failed_test = log_analyzer(line)
-                                if failed_test not in self.failed_tests and failed_test['test_case'] != 'NULL':
+                                if failed_test not in self.failed_tests and failed_test['test_case'].startswith('test'):
                                     temp_failed_test = failed_test['test_case']
                                     self.traceback[temp_failed_test] = []
                                     self.failed_tests.append(failed_test)
@@ -72,10 +68,10 @@ class BuildAnalyzer:
                                 # print('2: ' + line)
                                 label_error = True
 
-                            elif line.startswith('ERROR:') and label_error and '.' in line:
+                            elif line.startswith('ERROR:') and label_error and '.' in line and 'test' in line:
                                 # print('3: ' + line)
                                 failed_test = log_analyzer(line)
-                                if failed_test not in self.failed_tests and failed_test['test_case'] != 'NULL':
+                                if failed_test not in self.failed_tests and failed_test['test_case'].startswith('test'):
                                     temp_failed_test = failed_test['test_case']
                                     self.traceback[temp_failed_test] = []
                                     self.failed_tests.append(failed_test)
@@ -84,22 +80,46 @@ class BuildAnalyzer:
                             elif line.startswith(
                                     'FAILED') and 'failures=' not in line and 'errors=' not in line and '::' in line:
                                 failed_test = log_analyzer(line)
-                                if failed_test not in self.failed_tests and failed_test['test_case'] != 'NULL':
+                                if failed_test not in self.failed_tests and failed_test['test_case'].startswith('test'):
                                     temp_failed_test = failed_test['test_case']
                                     self.traceback[temp_failed_test] = []
                                     self.failed_tests.append(failed_test)
                                 label_error = False
 
                             # get traceback of each failed test
-                            elif temp_failed_test != '' and (
-                                    re.findall(r'.+[0-9][:][ ]in[ ].+', line) or re.findall(r'.+[0-9][,][ ]in[ ].+',
-                                                                                            line)):
-                                reaesc = re.compile(r'\x1b[^m]*m')
-                                line = reaesc.sub('', line)  # remove ANSI escape code
-                                trace = trace_analyzer(line)
-                                self.traceback[temp_failed_test].append(trace)
-                            else:
-                                continue
+                            elif line.startswith("File") and (
+                                    re.findall(r'.+[0-9][:][ ]in[ ].+', line) or
+                                    re.findall(r'.+[0-9][,][ ]in[ ].+', line)):
+                                test_file = re.findall(r'test_.+[.]py', line)
+                                case = re.findall(r'in[ ]test_.+', line)
+                                # print(line)
+                                if test_file and case and temp_failed_test != re.split(r'[ ]', case[0])[1]:
+                                    # print(line)
+                                    project_name = re.split('/', self.project_slug)[1]
+                                    path = re.split('/', re.findall(project_name + '/.+[.]py', line)[0])
+                                    test_dir = ''
+                                    for i in range(0, len(path) - 1):
+                                        test_dir += path[i] + '/'
+                                    test_case = re.split(r'[ ]', case[0])[1]
+                                    failed_test = {'test_case': test_case, 'test_file': test_file[0],
+                                                   'test_class': 'NULL', 'test_dir': test_dir}
+                                    if failed_test not in self.failed_tests and failed_test['test_case'].startswith(
+                                            'test'):
+                                        self.failed_tests.append(failed_test)
+                                        temp_failed_test = test_case
+                                        self.traceback[temp_failed_test] = []
+                                        reaesc = re.compile(r'\x1b[^m]*m')
+                                        line = reaesc.sub('', line)  # remove ANSI escape code
+                                        trace = trace_analyzer(line)
+                                        if trace not in self.traceback[temp_failed_test]:
+                                            self.traceback[temp_failed_test].append(trace)
+                                    label_error = False
+                                elif temp_failed_test != '':
+                                    reaesc = re.compile(r'\x1b[^m]*m')
+                                    line = reaesc.sub('', line)  # remove ANSI escape code
+                                    trace = trace_analyzer(line)
+                                    if trace not in self.traceback[temp_failed_test]:
+                                        self.traceback[temp_failed_test].append(trace)
 
                         if self.failed_tests:
                             self.log_with_failed_tests = log
@@ -223,7 +243,7 @@ def log_analyzer(line):
         test_case = test_list[1]
         test_file = test_list[0] + 'py'
     # format: '__________ CrawlerRunnerTestCase.test_spider_manager_verify_interface __________'
-    elif '___' in line and '[' not in line:
+    elif '___' in line and '[' not in line and '.' in line:
         test_info = re.findall(' (.+?) ', line)[0]
         test_list = re.split(r'[.]', test_info)
         test_case = test_list[1]
@@ -253,12 +273,12 @@ def log_analyzer(line):
 
 
 def one_build(build_id):
+    time1 = time.time()
     url = 'https://api.travis-ci.org/build/' + str(build_id)
     params = {'include': 'build.jobs,build.commit'}
     r = requests.get(url, headers={'Travis-API-Version': '3'}, params=params)
     build_history = r.json()
     # print(build_history)
-    time1 = time.time()
     if build_history['state'] == 'passed':
         print('This build passed!')
         return 'passed'
@@ -269,33 +289,50 @@ def one_build(build_id):
 
     else:
 
-        build = BuildAnalyzer(build_history)
-        print(build.failed_tests)
-        print(build.traceback)
+        build = build_processing(build_history)
         time2 = time.time()
         print('time:', str(time2 - time1))
-        return build_history
+        return build
         # for k, v in build.failed_jobs.items():
         #     print(k)
         #     print(v)
 
 
-def diff_compare(project_path, sha, traceback):
-    changes_dic = get_diff(sha, project_path)
-    diff_dic = {}
+def get_compare(compare_url):
+    compare_sha = re.split('/', compare_url)[-1]
+    return compare_sha
+
+
+def build_processing(build):
+    build_res = {'branch_name': build['branch']['name'], 'id': build['id'], 'state': build['state'],
+                 'previous_state': build['previous_state'], 'commit_sha': build['commit']['sha'],
+                 'duration': build['duration'], 'finished_at': build['finished_at'], 'failed_info': {}}
+    if build['state'] == 'failed':
+
+        build_ = BuildAnalyzer(build)
+        if build_.failed_tests:
+            build_info = {'commit_sha': build_.commit_sha, 'branch': build_.branch, 'build_id': build_.build_id,
+                          'compare_url': build['commit']['compare_url'], 'slug': build_.project_slug,
+                          'failed_tests': build_.failed_tests, 'traceback': build_.traceback}
+            build_res['failed_info'] = build_info
+    return build_res
+
+
+def diff_compare(changes_dic, traceback):
+    diff_dic = {'diff': 'Y'}
     if changes_dic['diff'] == 'Y':
-        diff_dic['diff'] = 'Y'
+        for test, trace in traceback.items():
+            diff_dic[test] = {'file': 'F', 'statement': 'F'}
+            for file, changes in changes_dic.items():
+                for i in range(len(trace)):
+                    if file in trace[i][0] or trace[i][0] in file:
+                        diff_dic[test]['file'] = 'T'
+                        for change in changes:
+
+                            if int(trace[i][1]) - change[0] >= 0 and int(trace[i][1]) - change[1] <= 0:
+                                diff_dic[test]['statement'] = 'T'
     else:
         diff_dic['diff'] = 'N'
-    for test, trace in traceback.items():
-        diff_dic[test] = 'F'
-        for file, changes in changes_dic.items():
-            for i in range(len(trace)):
-                if file in trace[i][0] or trace[i][0] in file:
-                    for change in changes:
-
-                        if int(trace[i][1]) - change[0] >= 0 and int(trace[i][1]) - change[1] <= 0:
-                            diff_dic[test] = 'T'
 
     return diff_dic
 
@@ -307,11 +344,11 @@ def get_all_builds(project_owner, project_name, interval=3600):
     now = datetime.datetime.now()
     date = now + datetime.timedelta(days=-interval)
     builds_list = []
-    param1 = {'include': 'build.jobs,build.commit', 'limit': 1, 'build.event_type': 'push', 'build.branch': 'master'}
+    # remove param [, 'build.event_type': 'push', 'build.branch': 'master']
+    param1 = {'include': 'build.jobs,build.commit', 'limit': 1}
     first_build = requests.get(url, headers={'Travis-API-Version': '3'}, params=param1).json()
     count = first_build['@pagination']['count'] - 1  # if limit is 0, set limit max builds
-    print(count)
-    # build_number = 200
+    # print(count)
     t1 = time.time()
     print("getting build history from Travis ci......")
     UTC_FORMAT = "%Y-%m-%dT%H:%M:%SZ"
@@ -319,9 +356,8 @@ def get_all_builds(project_owner, project_name, interval=3600):
     for _ in range(int(math.ceil(count / 100))):
         response = requests.session()
         response.keep_alive = False
-
-        params = {'include': 'build.jobs,build.commit', 'limit': 100, 'offset': offset,
-                  'build.event_type': 'push'}
+        # remove param ['build.event_type': 'push']
+        params = {'include': 'build.jobs,build.commit', 'limit': 100, 'offset': offset}
         if not finish:
             try:
                 builds = response.get(url, headers={'Travis-API-Version': '3'}, params=params).json()
@@ -347,26 +383,14 @@ def get_all_builds(project_owner, project_name, interval=3600):
 
     t2 = time.time()
     print("got " + str(len(builds_list)) + " " + " builds")
-    print("cost " + str(t2 - t1) + "seconds")
+    print("cost " + str(t2 - t1) + " seconds")
 
     build_dic = {}
     m = 1
     for build in builds_list:
         t1 = time.time()
-        build_res = {'branch_name': build['branch']['name'], 'id': build['id'], 'state': build['state'],
-                     'previous_state': build['previous_state'], 'commit_sha': build['commit']['sha'],
-                     'duration': build['duration'], 'finished_at': build['finished_at'], 'failed_info': {}}
-
-        if build['state'] == 'failed':
-
-            build_ = BuildAnalyzer(build)
-            if build_.failed_tests:
-                build_info = {'commit_sha': build_.commit_sha, 'branch': build_.branch, 'build_id': build_.build_id,
-                              'failed_tests': build_.failed_tests, 'traceback': build_.traceback}
-                build_res['failed_info'] = build_info
-
-        build_dic[str(build['id'])] = build_res
-
+        print(build['id'])
+        build_dic[str(build['id'])] = build_processing(build)
         t2 = time.time()
         print('extract build info, finish: ', m)
         m += 1
@@ -393,75 +417,32 @@ def get_failed_tests(failed_builds_list):
 
 
 def builds_to_json(project_owner, project_name, limit=0):
-    # url = 'https://api.travis-ci.org/repo/' + project_owner + '%2F' + \
-    #       project_name + '/builds'
-    # offset = 0
-    # builds_list = []
-    # n = limit
-    # param1 = {'include': 'build.jobs,build.commit', 'limit': 1, 'build.event_type': 'push'}
-    # first_build = requests.get(url, headers={'Travis-API-Version': '3'}, params=param1).json()
-    # if limit == 0:
-    #     limit = first_build['@pagination']['count'] - 1  # if limit is 0, set limit max builds
-    # if limit > 100:
-    #     n = 100
-    # for _ in range(int(math.ceil(limit / 100))):
-    #     params = {'include': 'build.jobs,build.commit',
-    #               'limit': n, 'offset': offset,
-    #               'build.event_type': 'push'}  # only get the previous passed and now passed builds
-    #     try:
-    #         r = requests.get(url, headers={'Travis-API-Version': '3'}, params=params)
-    #         builds_history = r.json()
-    #         builds_list += builds_history['builds']  # change the data type to list
-    #         offset += 100
-    #         print("finish: " + str(len(builds_list)))
-    #     except Exception as e:
-    #         print("error info: " + str(e))
-    #     finally:
-    #         time.sleep(2)
-    #
-    # build_dic = {}
-    # m = 1
-    # for build in builds_list:
-    #     t1 = time.time()
-    #     build_res = {'branch_name': build['branch']['name'], 'id': build['id'], 'state': build['state'],
-    #                  'previous_state': build['previous_state'], 'commit_sha': build['commit']['sha'],
-    #                  'duration': build['duration'], 'finished_at': build['finished_at'], 'failed_info': {}}
-    #
-    #     if build['state'] == 'failed':
-    #
-    #         build_ = BuildAnalyzer(build)
-    #         if build_.failed_tests:
-    #             build_info = {'commit_sha': build_.commit_sha, 'branch': build_.branch, 'build_id': build_.build_id,
-    #                           'failed_tests': build_.failed_tests, 'traceback': build_.traceback}
-    #             build_res['failed_info'] = build_info
-    #
-    #     build_dic[str(build['id'])] = build_res
-    #
-    #     t2 = time.time()
-    #     print('extract build info finish: ', m)
-    #     m += 1
-    #     print('time consumption: ', str(t2 - t1))
+    t1 = time.time()
     build_dic = get_all_builds(project_owner, project_name, limit)
     json_name = project_name + '_build_history' + '.json'
     with open(json_name, 'w') as f:
         json.dump(build_dic, f, indent=4)
+    t2 = time.time()
+    time_convert(t2 - t1, "total cost:")
 
 
-# def main():
-#     parser = argparse.ArgumentParser()
-#     parser.add_argument('integer', type=int, help='display an integer')
-#     args = parser.parse_args()
+def time_convert(seconds, words='cost: '):
+    m, s = divmod(seconds, 60)
+    h, m = divmod(m, 60)
+    print(words + "%d:%02d:%02d" % (h, m, s))
 
 
 if __name__ == '__main__':
-    owner = 'apache'
-    name = 'incubator-superset'
-    build_id = '672776651'
+    owner = 'explosion'
+    name = 'spaCy'
+    build_id = '461816736'
 
     # build = one_build(build_id)
     # print(build)
+    # time1 = time.time()
+    # builds_to_json(owner, name, 100)
+    # time2 = time.time()
+    # print('total time: ', str(time2 - time1))
 
-    time1 = time.time()
-    builds_to_json(owner, name, 100)
-    time2 = time.time()
-    print('total time: ', str(time2 - time1))
+    # builds to json
+    builds_to_json(owner, name, 730)

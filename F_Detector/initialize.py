@@ -1,11 +1,11 @@
 from mysql_handler import *
-from trace_cover import get_all_builds
+from trace_cover import get_all_builds, builds_to_json
 import click
 import json
 import time
 
 
-def save_data(builds, p):
+def save_data(builds):
     t1 = time.time()
     print("\n")
     failed_builds = []
@@ -25,18 +25,19 @@ def save_data(builds, p):
         save_passed_builds(passed_builds)
     print("\n")
     if failed_builds and failed_tests:
-        save_failed_builds_and_tests(failed_builds, failed_tests, p)
-
+        save_failed_builds_and_tests(failed_builds, failed_tests)
     t2 = time.time()
-    print("total cost " + str(t2 - t1) + " seconds")
+    print("save data cost " + str(t2 - t1) + " seconds")
 
 
 def initialize(p, o, n, l):
     t1 = time.time()
-    create_tables()
-    save_case_and_smells(p)
+    # create_tables()
+    # save_case_and_smells(p)
     builds = get_all_builds(o, n, l)
-    save_data(builds, p)
+    save_data(builds)
+    update_flaky_frequency()
+    update_detection_result(p)
     t2 = time.time()
     print("Done! total cost: " + str(t2 - t1))
 
@@ -57,13 +58,15 @@ def initialize_json(p, json_file):
     save_case_and_smells(p)
     print("loading json file...")
     builds = load_json(json_file)
-    save_data(builds, p)
+    save_data(builds)
+    update_flaky_frequency()
+    update_detection_result(p)
     t2 = time.time()
     print("Done! total cost: " + str(t2 - t1))
 
 
 @click.command()
-@click.option('--i', type=click.Choice(['init', 'init_json']),
+@click.option('--i', type=click.Choice(['init', 'init_json', 'builds2json']),
               help='init:get data from Travis; init_json: get data from json file')
 @click.option('--j', help='json file path/name')
 @click.option('--p', help='project path')
@@ -75,6 +78,8 @@ def main(i, p, o, n, l, j):
         initialize(p, o, n, l)
     elif i == 'init_json':
         initialize_json(p, j)
+    elif i == 'builds2json':
+        builds_to_json(o, n, l)
 
 
 if __name__ == '__main__':

@@ -6,6 +6,7 @@ import click
 import datetime
 import os
 from pathlib import Path
+from changes_github import func_timer
 
 
 def save_csv(file_path, headers, rows):
@@ -206,14 +207,26 @@ def show_dependency_cover(days=3600):
 
 def show_latest_dependency_cover(build_id=0):
     results = mh.search_latest_failed_build(build_id)
-    if results:
-        headers = ['Failed Test Case', 'Coverage status', 'Build ID', 'Build Finished Time', 'Path']
-        file_name = results[0][2] + '_dependency_cover'
-        file_path = combine_csv_path('dependency_cover', file_name)
-        save_csv(file_path, headers, results)
-        table = PrettyTable(headers)
+    if len(results) > 0:
+        data = []
         for r in results:
-            table.add_row([r[0], r[1], r[2], r[3], r[4]])
+            temp = [r[0]]
+            if r[2] == 'F' and r[3] == 'F':
+                temp.append('F')
+            else:
+                temp.append('T')
+            temp.append(r[4])
+            temp.append(r[1])
+            temp.append(r[5])
+            temp.append(r[6])
+            data.append(temp)
+        headers = ['Failed Test', 'Coverage status', 'Previous State', 'Build ID', 'Build Finished Time', 'Path']
+        file_name = results[0][1] + '_dependency_cover'
+        file_path = combine_csv_path('dependency_cover', file_name)
+        save_csv(file_path, headers, data)
+        table = PrettyTable(headers)
+        for r in data:
+            table.add_row([r[0], r[1], r[2], r[3], r[4], r[5]])
         print(table)
     else:
         print('Build passed or build failed without failed tests or no such build')
@@ -334,21 +347,165 @@ def show_flakiness_score(test_case):
     plt.show()
 
 
+@func_timer
+def show_flakiness():
+    results = mh.search_flakiness()
+    headers = ['Build ID', 'Test Method', 'Flaky or Not', 'Detection Method', 'Number of Smells',
+               'Flaky Frequency', 'Size', 'Path']
+    rows = []
+    table = PrettyTable(headers)
+    for res in results:
+        if res[3] == 'T':
+            method = 'Traceback Coverage'
+        else:
+            method = 'Multi-Factor'
+        temp = [res[0], res[1], 'flaky', method, res[4], res[5], res[6], res[7]]
+
+        table.add_row(temp)
+        rows.append(temp)
+
+    folder = 'flakiness_detection'
+    file_name = 'Flakiness_Detection'
+    file_path = combine_csv_path(folder, file_name)
+    save_csv(file_path, headers, rows)
+    print(table[:500])
+
+
+def show_detection_results():
+    results = mh.search_detection_results()
+    headers = ['Build ID', 'Test Method', 'Flaky or Not', 'Detection Method', 'Traceback Cover',
+               'Number of Smells', 'Flaky Frequency', 'Size', 'Path']
+    rows = []
+    table = PrettyTable(headers)
+    x_label = ['TC_flaky', 'TC_non-flaky', 'MF_flaky', 'MF_non-flaky', 'Missing']
+    TC_flaky = mh.search_TC_flaky()
+    TC_non_flaky = mh.search_TC_non_flaky()
+    MF_flaky = mh.search_MF_flaky()
+    MF_non_flaky = mh.search_TC_non_flaky()
+    Missing = mh.search_missing_factors()
+    y_value = [TC_flaky, TC_non_flaky, MF_flaky, MF_non_flaky, Missing]
+
+    plt.xlabel("Results")
+    plt.ylabel("Number of Tests")
+    plt.title("Detection Results")
+    plt.bar(x_label, y_value)
+    for a, b in zip(x_label, y_value):
+        plt.text(a, b + 1, '%d' % b, ha='center', va='bottom')
+
+    for res in results:
+        if res[3] == 'T':
+            method = 'Traceback Coverage'
+        else:
+            method = 'Multi-Factor'
+
+        if res[2] == 'F':
+            dr = 'Flaky'
+        elif res[2] == 'N':
+            dr = 'Non-Flaky'
+        else:
+            dr = 'Missing factors'
+
+        if res[4] == 'T':
+            cover = 'Covered'
+        else:
+            cover = 'Not Covered'
+        temp = [res[0], res[1], dr, method, cover, res[5], res[6], res[7], res[8]]
+
+        table.add_row(temp)
+        rows.append(temp)
+
+    folder = 'results'
+    file_name = 'Results'
+    file_path = combine_csv_path(folder, file_name)
+    save_csv(file_path, headers, rows)
+    print(table[:500])
+
+    image_path = combine_image_path(folder, "Results")
+    plt.savefig(image_path)
+
+    plt.show()
+
+
+@func_timer
+def show_detection_results_id(build_id):
+    results = mh.search_detection_result_id(build_id)
+    headers = ['Build ID', 'Test Method', 'Flaky or Not', 'Detection Method', 'Traceback Cover',
+               'Number of Smells', 'Flaky Frequency', 'Size', 'Path']
+    table = PrettyTable(headers)
+    if len(results) > 0:
+        for res in results:
+            if res[3] == 'T':
+                method = 'Traceback Coverage'
+            else:
+                method = 'Multi-Factor'
+
+            if res[2] == 'F':
+                dr = 'Flaky'
+            elif res[2] == 'N':
+                dr = 'Non-Flaky'
+            else:
+                dr = 'Missing factors'
+
+            if res[4] == 'T':
+                cover = 'Covered'
+            else:
+                cover = 'Not Covered'
+            temp = [res[0], res[1], dr, method, cover, res[5], res[6], res[7], res[8]]
+
+            table.add_row(temp)
+        print(table)
+    else:
+        print("No such build in DB!")
+
+
+@func_timer
+def show_detection_results_test(test_method):
+    results = mh.search_detection_result_test(test_method)
+    headers = ['Build ID', 'Test Method', 'Flaky or Not', 'Detection Method', 'Traceback Cover',
+               'Number of Smells', 'Flaky Frequency', 'Size', 'Path']
+    table = PrettyTable(headers)
+    if len(results) > 0:
+        for res in results:
+            if res[3] == 'T':
+                method = 'Traceback Coverage'
+            else:
+                method = 'Multi-Factor'
+
+            if res[2] == 'F':
+                dr = 'Flaky'
+            elif res[2] == 'N':
+                dr = 'Non-Flaky'
+            else:
+                dr = 'Missing factors'
+
+            if res[4] == 'T':
+                cover = 'Covered'
+            else:
+                cover = 'Not Covered'
+            temp = [res[0], res[1], dr, method, cover, res[5], res[6], res[7], res[8]]
+
+            table.add_row(temp)
+        print(table)
+    else:
+        print("No such test in DB!")
+
+
 @click.command()
 @click.option('--type', type=click.Choice(['size', 'size_bigger_than', 'size_between', 'smell', 'smell_details',
-                                           'dc_all', 'dc_one', 'testcase_history', 'fs_all', 'fs_one']),
+                                           'tc_all', 'tc_one', 'test_history', 'flaky', 'results',
+                                           'results_id', 'results_test']),
               help='the type of data that you want to check')
 @click.option('--size', type=int, help='you need set size when you choose size_bigger_than')
 @click.option('--between', nargs=2, type=int, help='you need set start and end when you choose size_between')
-@click.option('--test_case', default='all',
+@click.option('--test', default='all',
               help='get test smell details of a test case(default:all) when '
                    'you choose smell_details, all means show the details of all the test cases')
 @click.option('--days', type=int, default=3600,
               help='get the data generated within x days(default:3600),'
                    'you can set days when you choose dependency_cover or build_history')
-@click.option('--build_id', type=int, default=0,
-              help='get the dependency cover info of a certain build')
-def main(type, size, between, test_case, days, build_id):
+@click.option('--id', type=int, default=0,
+              help='build id')
+def main(type, size, between, test, days, id):
     if between is None:
         between = [30, 50]
     if type == 'size':
@@ -360,17 +517,21 @@ def main(type, size, between, test_case, days, build_id):
     elif type == 'smell':
         show_smell()
     elif type == 'smell_details':
-        show_smell_details(test_case)
-    elif type == 'dc_all':
+        show_smell_details(test)
+    elif type == 'tc_all':
         show_dependency_cover(days)
-    elif type == 'testcase_history':
+    elif type == 'test_history':
         show_build_history(days)
-    elif type == 'fs_all':
-        show_flakiness_score(test_case)
-    elif type == 'fs_one':
-        show_flakiness_score_one(build_id)
-    elif type == 'dc_one':
-        show_latest_dependency_cover(build_id)
+    elif type == 'tc_one':
+        show_latest_dependency_cover(id)
+    elif type == 'flaky':
+        show_flakiness()
+    elif type == 'results':
+        show_detection_results()
+    elif type == 'results_id':
+        show_detection_results_id(id)
+    elif type == 'results_test':
+        show_detection_results_test(test)
 
 
 if __name__ == '__main__':
