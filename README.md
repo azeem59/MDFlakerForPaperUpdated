@@ -59,7 +59,7 @@
    
    dataset.csv format:
    
-    [Test Case Name, Build ID, Flaky Frequency, Traceback Coverage, Number of Test Smells, Previous State, Test Size, Flaky or Not]
+    [Test Name, Build ID, Flaky Frequency, Traceback Coverage, Number of Test Smells, Previous State, Test Size, Flaky or Not]
 ### 2.3 Two ways to load build history
 Two of the factors, in this tool, depend on build history. This project facilitates users to load history either from Travis or by manually assigning the JSON file.  
 ####  2.3.1 Download and Process Build Logs from Travis CI
@@ -197,20 +197,20 @@ get detection results and other info of one build
 
         command: python show.py --type results_id --build_id [build id]
         
-        output: table ['Build ID', 'Test Method', 'Flaky or Not', 'Detection Method', 'Traceback Cover', 'Number of Smells', 'Flaky Frequency', 'Size', 'Path']
+        output: table ['Build ID', 'Test Name', 'Flaky or Not', 'Detection Method', 'Traceback Cover', 'Number of Smells', 'Flaky Frequency', 'Size', 'Path']
         
 get detection results and other info of a test.
 
         command: python show.py --type results_test --test [test name]
         
-        output: table ['Build ID', 'Test Method', 'Flaky or Not', 'Detection Method', 'Traceback Cover', 'Number of Smells', 'Flaky Frequency', 'Size', 'Path']
+        output: table ['Build ID', 'Test Name', 'Flaky or Not', 'Detection Method', 'Traceback Cover', 'Number of Smells', 'Flaky Frequency', 'Size', 'Path']
         
         
 get all detection results and other info
         
         command: python show.py --type results
         
-        output: 1. table ['Build ID', 'Test Method', 'Flaky or Not', 'Detection Method', 'Traceback Cover', 'Number of Smells', 'Flaky Frequency', 'Size', 'Path']
+        output: 1. table ['Build ID', 'Test Name', 'Flaky or Not', 'Detection Method', 'Traceback Cover', 'Number of Smells', 'Flaky Frequency', 'Size', 'Path']
                 2. chart
    example output:
    
@@ -230,12 +230,12 @@ get all detection results and other info
    Use the following command to check tests marked as flaky by this tool
    
     command: python show.py --type flaky
-    output: table ['Build ID', 'Test Method', 'Flaky or Not', 'Detection Method', 'Number of Smells', 'Flaky Frequency', 'Size', 'Path']
+    output: table ['Build ID', 'Test Name', 'Flaky or Not', 'Detection Method', 'Number of Smells', 'Flaky Frequency', 'Size', 'Path']
 #### 2.4.3 test smells
 
 ##### (1) show test smells distribution
       command: python show.py --type smell
-      output: 1. table ['Test Case', 'Number of Smells', 'Path']
+      output: 1. table ['Test Name', 'Number of Smells', 'Path']
               2. 3 charts
    example output:
    ![smells](pic/smells.png)
@@ -259,13 +259,13 @@ show dependency coverage of a certain build:
 
       command: python show.py --type tc_one --id [build id]
       
-      output: a table ['Failed Test Case', 'Coverage status', 'Build ID', 'Build Finished Time', 'Path']
+      output: a table ['Failed Test', 'Coverage status', 'Build ID', 'Build Finished Time', 'Path']
 
 The below command used all build history from DB.
 
       command: python show.py --type tc_all 
       
-      output: table ['Failed Test Case Name', 'NT-FDUC', 'Path', 'Last Failed Build ID']
+      output: table ['Failed Test', 'NT-FDUC', 'Path', 'Last Failed Build ID']
       
       note: NT-FDUC = Number of Times, It failed due to unrelated changes in past
    
@@ -273,7 +273,7 @@ If you want to limit the number of days, use the following command:
 
       command: python show.py --type dc_all --days [Number Of Days]
 
-       output: table ['Failed Test Case Name', 'NT-FDUC', 'Path', 'Last Failed Build ID']
+       output: table ['Failed Test', 'NT-FDUC', 'Path', 'Last Failed Build ID']
 
 #### 2.4.5 test history
 
@@ -283,7 +283,7 @@ show test failed history:
         
         --days is opptional, days means get the data generated whin X days; default 3600
         
-        output: 1. table ['Failed Test Name', 'Failed Times', 'Path']
+        output: 1. table ['Failed Test', 'Failed Times', 'Path']
        
                 2. chart
    example output:
@@ -298,11 +298,11 @@ show test failed history:
 ##### (2) show tests that their size bigger than x
       command: python show.py --type size_bigger_than --size [x]
       
-      output: a table ['Test Case', 'Path', 'Size']
+      output: a table ['Test Name', 'Path', 'Size']
 ##### (3) show test size between x and y
       command: python show.py --type size_between --between [x] [y]
       
-      output: a table ['Test Case', 'Path', 'Size', 'Test Smells']
+      output: a table ['Test Name', 'Path', 'Size', 'Test Smells']
 
 ### 2.5 Update Data
 #### 2.5.1 update build history from Travis CI
