@@ -1,4 +1,28 @@
 # FlakinessDetector
+## Workflow
+![results](pic/system%20workflow.png) 
+## Traceback Coverage Detection
+   If the previous state of a failed test is passed this tool will use traceback overage to detect flaky tests.
+   
+   This tool will mark a failed test(previous passed) as flaky if the traceback didn't cover the changes,
+   otherwise, mark the test as non-flaky.
+## Multi-factor Detection
+   If the previous state of a failed test is not passed, this tool will use multi-factor to detect flaky tests.
+   
+   This tool used 5 factors as input to train a KNN model, then use this model to detect flaky tests
+   
+   **5 factors**:
+   
+   *traceback coverage*: whether traceback covers changes.
+   
+   *flakiness-inducing test smell*: test smell that may cause test flaky.
+   
+   *flakiness frequency*:  the number of state transitions of a test divides it's number of failures
+   
+   ![flaky_frequency](pic/flaky_frequency.png) 
+   
+   *test size*: the number of uncommented source code lines for a test method.
+   *previous state*: the previous state of a test. 
 ## 1.Requirements
 ### Language:
    python>=3.6.7
@@ -189,16 +213,16 @@ get all detection results and other info
                 2. chart
    example output:
    
-   TC_flaky: number of tests marked as flaky by traceback coverage detection method
+   **TC_flaky**: number of tests marked as flaky by traceback coverage detection method
    
-   TC_non-flaky: number of tests marked as non-flaky by traceback coverage detection method
+   **TC_non-flaky**: number of tests marked as non-flaky by traceback coverage detection method
    
-   MF_flaky: number of tests marked as flaky by multi-factor detection  method
+   **MF_flaky**: number of tests marked as flaky by multi-factor detection  method
    
-   MF_non-flaky: number of tests marked as non-flaky by multi-factor detection method
+   **MF_non-flaky**: number of tests marked as non-flaky by multi-factor detection method
    
-   Missing: number of tests missing factors(size and smells), because unable to checkout the commit
-   ![flakiness score](pic/Results.jpg) 
+   **Missing**: number of tests missing factors(size and smells), because unable to checkout the commit
+   ![results](pic/Results.jpg) 
    
 
 #### 2.4.2 show tests marked as flaky by this tool
@@ -222,7 +246,7 @@ get all detection results and other info
 
       command: python show.py --type smell_details --test [Test Name]
       
-      output: table ['Test Case', 'Number of Smells', 'Smell type', 'Tip', 'Location', 'Path']
+      output: table ['Test Name', 'Number of Smells', 'Smell type', 'Tip', 'Location', 'Path']
 
 #### 2.4.4 traceback coverage (Think about other name -- I will also think)
 
