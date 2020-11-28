@@ -770,7 +770,7 @@ def update_detection_result(project_path, start_time='2000-01-01 00:00:00'):
                             dependency_cover = 1
                         factors = [flaky_frequency, dependency_cover, smells, previous_state, size]
                         result, p = KNN_predict('dataset.csv', [factors])
-                        if result == 1:
+                        if p[1] > 0.7:
                             res = 'F'
                         else:
                             res = 'N'
@@ -804,7 +804,7 @@ def update_multi_results():
     db = connect()
     cur = db.cursor()
     sql = """select build_id, failed_test_name, flaky_frequency, statement_cover, smells, previous_state, `size`
-             from failed_tests"""
+             from failed_tests where detection_method='M' and detection_result!='M'"""
     results = search(sql)
     try:
         for test in results:
@@ -815,7 +815,7 @@ def update_multi_results():
 
             factors = [test[2], dependency_cover, test[4], test[5], test[6]]
             result, p = KNN_predict('dataset.csv', [factors])
-            if result == 1:
+            if p[1] > 0.7:
                 res = 'F'
             else:
                 res = 'N'

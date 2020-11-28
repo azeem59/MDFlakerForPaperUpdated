@@ -381,7 +381,7 @@ def show_detection_results():
     TC_flaky = mh.search_TC_flaky()
     TC_non_flaky = mh.search_TC_non_flaky()
     MF_flaky = mh.search_MF_flaky()
-    MF_non_flaky = mh.search_TC_non_flaky()
+    MF_non_flaky = mh.search_MF_non_flaky()
     Missing = mh.search_missing_factors()
     y_value = [TC_flaky, TC_non_flaky, MF_flaky, MF_non_flaky, Missing]
 
