@@ -22,6 +22,7 @@
    ![flaky_frequency](pic/flaky_frequency.png) 
    
    *test size*: the number of uncommented source code lines for a test method.
+   
    *previous state*: the previous state of a test. 
 ## 1.Requirements
 ### Language:
