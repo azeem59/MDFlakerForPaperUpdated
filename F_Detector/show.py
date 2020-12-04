@@ -211,14 +211,14 @@ def show_latest_dependency_cover(build_id=0):
         data = []
         for r in results:
             temp = [r[0]]
-            if r[2] == 'F' and r[3] == 'F':
-                temp.append('F')
+            if r[2] == 'F':
+                temp.append('Not Covered')
             else:
-                temp.append('T')
-            temp.append(r[4])
+                temp.append('Covered')
+            temp.append(r[3])
             temp.append(r[1])
+            temp.append(r[4])
             temp.append(r[5])
-            temp.append(r[6])
             data.append(temp)
         headers = ['Failed Test', 'Coverage status', 'Previous State', 'Build ID', 'Build Finished Time', 'Path']
         file_name = results[0][1] + '_dependency_cover'
