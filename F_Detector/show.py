@@ -240,9 +240,13 @@ def show_build_history(days=3600):
     def show_status():
         x_label = ['passed', 'failed without failed tests', 'failed with failed tests']
         y_value = []
+        sum = 0
         for r in build_status:
-            y_value.append(r[1])
-
+            if r[0] == 3 or r[0] == 4 or r[0] == 1:
+                sum += r[1]
+            else:
+                y_value.append(r[1])
+        y_value.append(sum)
         plt.xlabel("Status")
         plt.ylabel("Number of builds")
         plt.title("Build History Status Distribution" + " (within " + str(days) + " days)")
