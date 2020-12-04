@@ -463,7 +463,7 @@ def search_latest_failed_build(build_id):
                  ft.created_time, ft.path 
                  FROM failed_tests ft join build_history bh
                  on ft.build_id = bh.build_id
-                 WHERE build_id = (SELECT build_id FROM build_history 
+                 WHERE ft.build_id = (SELECT build_id FROM build_history 
                  WHERE STATUS=2 ORDER BY CREATED_TIME DESC LIMIT 1)"""
     else:
         sql = """SELECT ft.FAILED_TEST_NAME,ft.build_id,ft.STATEMENT_COVER, bh.previous_state,
@@ -514,7 +514,7 @@ def flakiness_score(test_case):
 
 
 def search_flakiness():
-    sql = """select build_id, failed_test_name, detection_result, detection_method, 
+    sql = """select build_id, failed_test_name, detection_result, detection_method, statement_cover,
              smells, flaky_frequency, `size`, path
              from failed_tests where detection_result='F'
              order by detection_method desc"""

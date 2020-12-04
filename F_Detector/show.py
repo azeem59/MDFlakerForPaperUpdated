@@ -350,7 +350,7 @@ def show_flakiness_score(test_case):
 @func_timer
 def show_flakiness():
     results = mh.search_flakiness()
-    headers = ['Build ID', 'Test Method', 'Flaky or Not', 'Detection Method', 'Number of Smells',
+    headers = ['Build ID', 'Test Method', 'Flaky or Not', 'Detection Method', 'Traceback Coverage', 'Number of Smells',
                'Flaky Frequency', 'Size', 'Path']
     rows = []
     table = PrettyTable(headers)
@@ -360,12 +360,17 @@ def show_flakiness():
         else:
             method = 'Multi-Factor'
 
-        if res[6] == 0:
+        if res[4] == 'T':
+            cover = 'Covered'
+        else:
+            cover = 'Not Covered'
+
+        if res[7] == 0:
             smells = 'Unavailable'
             size = 'Unavailable'
-            temp = [res[0], res[1], 'flaky', method, smells, res[5], size, res[7]]
+            temp = [res[0], res[1], 'flaky', method, cover, smells, res[6], size, res[8]]
         else:
-            temp = [res[0], res[1], 'flaky', method, res[4], res[5], res[6], res[7]]
+            temp = [res[0], res[1], 'flaky', method, cover, res[5], res[6], res[7], res[8]]
 
         table.add_row(temp)
         rows.append(temp)
