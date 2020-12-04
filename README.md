@@ -9,9 +9,9 @@
 ## Multi-factor Detection
    If the previous state of a failed test is not passed, this tool will use multi-factor to detect flaky tests.
    
-   This tool used 5 factors as input to train a KNN model, then use this model to detect flaky tests
+   This tool used 4 factors as input to train a KNN model, then use this model to detect flaky tests
    
-   **5 factors**:
+   **4 factors**:
    
    *traceback coverage*: whether traceback covers changes.
    
@@ -23,7 +23,6 @@
    
    *test size*: the number of uncommented source code lines for a test method.
    
-   *previous state*: the previous state of a test. 
 ## 1.Requirements
 ### Language:
    python>=3.6.7

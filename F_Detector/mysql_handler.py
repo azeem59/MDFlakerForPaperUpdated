@@ -15,7 +15,7 @@ from trace_cover import get_compare, diff_compare
 from changes_github import get_changes, func_timer
 
 
-def connect(host="localhost", user="root", pw="root", db="spacy"):
+def connect(host="localhost", user="root", pw="root", db="spaCy"):
     return pymysql.connect(host, user, pw, db)  # url,username,password,database
 
 
@@ -704,7 +704,7 @@ def get_relative_path(r_path):
     p_list = r_path.split(flag)
     if len(p_list) >= 2:
         p = p_list[-2:]
-        return p[0] + flag, p[1]
+        return p[0], p[1]
     else:
         return None
 

@@ -27,12 +27,11 @@ def F(name):
         return Lisa[1]
     else:
         return -1
-
-
 def test_A():
     test_name = ['Sam', 'Jay']
     for name in test_name:
         print(F(name))
+
 
 def divide(x, y):
     return x / y
@@ -40,5 +39,5 @@ def divide(x, y):
 
 def test_divide():
     x = 10
-    y = 2
+    y = 0
     divide(x, y)

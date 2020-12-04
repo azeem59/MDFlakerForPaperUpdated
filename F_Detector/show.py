@@ -359,7 +359,13 @@ def show_flakiness():
             method = 'Traceback Coverage'
         else:
             method = 'Multi-Factor'
-        temp = [res[0], res[1], 'flaky', method, res[4], res[5], res[6], res[7]]
+
+        if res[6] == 0:
+            smells = 'Unavailable'
+            size = 'Unavailable'
+            temp = [res[0], res[1], 'flaky', method, smells, res[5], size, res[7]]
+        else:
+            temp = [res[0], res[1], 'flaky', method, res[4], res[5], res[6], res[7]]
 
         table.add_row(temp)
         rows.append(temp)
@@ -409,7 +415,13 @@ def show_detection_results():
             cover = 'Covered'
         else:
             cover = 'Not Covered'
-        temp = [res[0], res[1], dr, method, cover, res[5], res[6], res[7], res[8]]
+
+        if res[7] == 0:
+            smells = 'Unavailable'
+            size = 'Unavailable'
+            temp = [res[0], res[1], dr, method, cover, smells, res[6], size, res[8]]
+        else:
+            temp = [res[0], res[1], dr, method, cover, res[5], res[6], res[7], res[8]]
 
         table.add_row(temp)
         rows.append(temp)
@@ -432,7 +444,9 @@ def show_detection_results_id(build_id):
     headers = ['Build ID', 'Test Method', 'Flaky or Not', 'Detection Method', 'Traceback Cover',
                'Number of Smells', 'Flaky Frequency', 'Size', 'Path']
     table = PrettyTable(headers)
+    rows = []
     if len(results) > 0:
+        print(len(results), 'failed tests')
         for res in results:
             if res[3] == 'T':
                 method = 'Traceback Coverage'
@@ -450,9 +464,20 @@ def show_detection_results_id(build_id):
                 cover = 'Covered'
             else:
                 cover = 'Not Covered'
-            temp = [res[0], res[1], dr, method, cover, res[5], res[6], res[7], res[8]]
+
+            if res[7] == 0:
+                smells = 'Unavailable'
+                size = 'Unavailable'
+                temp = [res[0], res[1], dr, method, cover, smells, res[6], size, res[8]]
+            else:
+                temp = [res[0], res[1], dr, method, cover, res[5], res[6], res[7], res[8]]
 
             table.add_row(temp)
+            rows.append(temp)
+        folder = 'results_id'
+        file_name = str(build_id)
+        file_path = combine_csv_path(folder, file_name)
+        save_csv(file_path, headers, rows)
         print(table)
     else:
         print("No such build in DB!")
@@ -464,7 +489,9 @@ def show_detection_results_test(test_method):
     headers = ['Build ID', 'Test Method', 'Flaky or Not', 'Detection Method', 'Traceback Cover',
                'Number of Smells', 'Flaky Frequency', 'Size', 'Path']
     table = PrettyTable(headers)
+    rows = []
     if len(results) > 0:
+        print(len(results), 'failed builds')
         for res in results:
             if res[3] == 'T':
                 method = 'Traceback Coverage'
@@ -482,9 +509,20 @@ def show_detection_results_test(test_method):
                 cover = 'Covered'
             else:
                 cover = 'Not Covered'
-            temp = [res[0], res[1], dr, method, cover, res[5], res[6], res[7], res[8]]
+
+            if res[7] == 0:
+                smells = 'Unavailable'
+                size = 'Unavailable'
+                temp = [res[0], res[1], dr, method, cover, smells, res[6], size, res[8]]
+            else:
+                temp = [res[0], res[1], dr, method, cover, res[5], res[6], res[7], res[8]]
 
             table.add_row(temp)
+            rows.append(temp)
+        folder = 'results_test'
+        file_name = test_method
+        file_path = combine_csv_path(folder, file_name)
+        save_csv(file_path, headers, rows)
         print(table)
     else:
         print("No such test in DB!")
