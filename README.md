@@ -1,15 +1,8 @@
 # FlakinessDetector
 ## Workflow
 ![results](pic/system%20workflow.png) 
-## Traceback Coverage Detection
-   If the previous state of a failed test is passed this tool will use traceback overage to detect flaky tests.
-   
-   This tool will mark a failed test(previous passed) as flaky if the traceback didn't cover the changes,
-   otherwise, mark the test as non-flaky.
-## Multi-factor Detection
-   If the previous state of a failed test is not passed, this tool will use multi-factor to detect flaky tests.
-   
-   This tool used 4 factors as input to train a KNN model, then use this model to detect flaky tests
+
+This tool uses 4 factors as a criteria to decide if test cases are falky or non-flaky. These factors serves as input to train a KNN model, then use this model to detect flaky tests
    
    **4 factors**:
    
@@ -17,11 +10,18 @@
    
    *flakiness-inducing test smell*: test smell that may cause test flaky.
    
-   *flakiness frequency*:  the number of state transitions of a test divides it's number of failures
+   *flakiness frequency*:  the number of state transitions (from failure to pass or vice versa) of a test divides it's number of failures.
    
    ![flaky_frequency](pic/flaky_frequency.png) 
    
    *test size*: the number of uncommented source code lines for a test method.
+## Scenario 1 - Traceback Takes Priority
+   If the previous state of a failed test case is passed, this tool will mark traceback overage an important factor to decide if test cases is flaky or non-flaky. This tool will still provide information about other factors such as number of test smells, test case history and size.
+   
+In this scenario, this tool will mark a failed test case as flaky if the traceback didn't cover the recent changes,
+otherwise, mark the test as non-flaky.
+## Scenario 2 - All Factors take priorty - Multi-factor Detection
+   If the previous state of a failed test is not passed (Failed, Error, Cancelled, None), this tool will mark all factors important to decide if test case is flaky or non-flaky. 
    
 ## 1.Requirements
 ### Language:
@@ -54,15 +54,20 @@
    token
 #### 2.2.5 add training dataset
    Multi-factor detection method needs dataset to train a KNN model, the training dataset 
-   should be named as "dataset.csv" and put it in F_Detector directory.
+   should be named as "dataset.csv" and put it in F_Detector directory. 
+   ***** explain how to get the dataset, provide precison recall... Also upload seperate excel fil for myself with 80/20, 90/10 ********
    
    dataset.csv format:
    
     [Test Name, Build ID, Flaky Frequency, Traceback Coverage, Number of Test Smells, Previous State, Test Size, Flaky or Not]
+
+
 ### 2.3 Two ways to load build history
 Two of the factors, in this tool, depend on build history. This project facilitates users to load history either from Travis or by manually assigning the JSON file.  
 ####  2.3.1 Download and Process Build Logs from Travis CI
-The Travis build logs of the projects can be accessed through GitHub project. For example, if you visit "https://github.com/apache/incubator-superset" page, you will find ![size](pic/build_link.png) . Click here and it will take you to the build history. The following commands load it automatically.
+The Travis build logs of the projects can be accessed through GitHub project. For example, if you visit "https://github.com/apache/incubator-superset" page, you will find ![size](pic/build_link.png) . Click on "build|passing", as shown on above image and it will take you to the build history. 
+
+The following command uses two source of information. One is the downloaded build history from Travis project and another one is a cloned project. The command will parse the test cases, from cloned project, to get test smells and number of lines as well as parse build logs from Travis. At the end, this command will detect how many of failed test cases are flaky or non-flaky given a detection method (traceback or multifactor) mentiond above. These information will be stored in database.  
 
       command: python initialize.py --i init --p [project_under_test_path] --o [project_under_test_owner] --n [project_under_test_name] --l [NumberOfDays]
       
@@ -72,6 +77,11 @@ The Travis build logs of the projects can be accessed through GitHub project. Fo
       --l: opptional, build history in the past [NumberOfDays] days (for example, 180, 365) you want to get from Travis CI, default:0, get all the build history
 
 For example, in the URL: https://github.com/apache/incubator-superset, the project owner is "apache", the project name is "incubator-superset" and local path could be where you cloned the project. 
+
+#### 2.3.1.1 Update build history from Travis CI
+In case of new build execution, you must update the local database about test cases (number of test smells, lines of code) and their results (flaky or non-flaky) by running the following command to keep the database updated.
+    
+    command: python update.py --update travis --p [project path] --o [project owner] --n [project name]
 
 Note: use "python initialize.py --help" to get details of this command
 
@@ -177,13 +187,7 @@ The structure of JSON file is as follows:
             }
         }
     }
-#### 2.3.3 Convert build history on Travis CI to json file
-   This tool allow us automatically convert build history on Travis CI to json file.
-   
-    command: python initialize.py --i builds2json -- o [project_under_test_owner] --n [project_under_test_name] --l [NumberOfDays]
-    --o: project under test owner on github
-    --n: project under test name on github
-    --l: opptional, build history in the past [NumberOfDays] days (for example, 180, 365) you want to get from Travis CI, default:0, get all the build history
+
 
 ### 2.4 Generate Output in Tables and Graphs
    There are 2 ways to show data: charts and tables. 
@@ -191,25 +195,24 @@ The structure of JSON file is as follows:
    Every table will be saved as a csv file to output/csv and every chart will be saved as a image to output/image
    use "python show.py --help" to get details
 
-#### 2.4.1 show detection results
+#### 2.4.1 Results (Flaky/Non-flaky) about Failed tests by Build_id, test case name or all builds
 
-get detection results and other info of one build
+This following command will provides results (CSV file in folder output named "results_id" in output and in terminal output) of all failed test cases in the the given build. 
 
         command: python show.py --type results_id --id [build id]
+
         output: table ['Build ID', 'Test Name', 'Flaky or Not', 'Detection Method', 'Traceback Cover', 'Number of Smells', 'Flaky Frequency', 'Size', 'Path']
         
-get detection results and other info of a test.
+This following command will provides results (in CSV file in folder named "results_test" in output folder and in terminal output) of a given test case in the the all build.
 
         command: python show.py --type results_test --test [test name]
         
-        output: table ['Build ID', 'Test Name', 'Flaky or Not', 'Detection Method', 'Traceback Cover', 'Number of Smells', 'Flaky Frequency', 'Size', 'Path']
+             
+This following command will provides results (in CSV file in folder named "results" in output folder and in terminal output) of a all failed test cases in all failed builds.
         
+        command: python3 show.py --type results
         
-get all detection results and other info
-        
-        command: python show.py --type results
-        
-        output: 1. table ['Build ID', 'Test Name', 'Flaky or Not', 'Detection Method', 'Traceback Cover', 'Number of Smells', 'Flaky Frequency', 'Size', 'Path']
+
                 2. chart
    example output:
    
@@ -225,58 +228,69 @@ get all detection results and other info
    ![results](pic/Results.jpg) 
    
 
-#### 2.4.2 show tests marked as flaky by this tool
-   Use the following command to check tests marked as flaky by this tool
+#### 2.4.2 Show only flaky tests in all failed builds 
+
+   Use the following command to check tests marked as flaky by this tool in all builds
    
     command: python show.py --type flaky
+
     output: table ['Build ID', 'Test Name', 'Flaky or Not', 'Detection Method', 'Number of Smells', 'Flaky Frequency', 'Size', 'Path']
+
 #### 2.4.3 test smells
 
 ##### (1) show test smells distribution
-      command: python show.py --type smell
-      output: 1. table ['Test Name', 'Number of Smells', 'Path']
-              2. 3 charts
+The following commands provides information of available test smells in current test repository (where smell>=1). It does not involve information about test case as passing or failing. It is a static information.
+
+      command: python3 show.py --type smell
+
+      output (csv generated in folder name "test_smell"): 
+              1. table ['Test Name', 'Number of Smells', 'Path']
+              2. 3 charts in panel
    example output:
    ![smells](pic/smells.png)
+
 ##### (2) show test smell details
 
-      command: python show.py --type smell_details 
+The following commands provides detailed information (i.e., category) of available test smells in the current test repository (where smell>=1). It does not involve information about test case as passing or failing. It is a static information.
 
- The above command will provides information for all test cases. In case, you want to limit to one specific test case, run the following command:
+      command: python3 show.py --type smell_details 
 
-      command: python show.py --type smell_details --test [Test Name]
+ In case, you want to limit to one specific test case, run the following command:
+
+      command: python3 show.py --type smell_details --test [Test Name]
       
-      output: table ['Test Name', 'Number of Smells', 'Smell type', 'Tip', 'Location', 'Path']
+      output (csv generated in folder name "test_smell"): 
+      table ['Test Name', 'Number of Smells', 'Smell type', 'Tip', 'Location', 'Path']
 
 #### 2.4.4 traceback coverage (Think about other name -- I will also think)
 
-show latest failed build with failed tests: 
+This command will show failed test cases in the last failed build together with if failed test cases covered the changeds
 
-      command: python show.py --type tc_one
+      command : python3 show.py --type tc_one
       
-show dependency coverage of a certain build:
+In case, you want to know all failed test cases and whether they covered the changes, in the specific build.
 
-      command: python show.py --type tc_one --id [build id]
+      command: python3 show.py --type tc_one --id [build id]
       
-      output: a table ['Failed Test', 'Coverage status', 'Build ID', 'Build Finished Time', 'Path']
+      output(csv generated in folder name "dependency_cover"): a table ['Failed Test', 'Coverage status', 'Previous state', 'Build ID', 'Build Finished Time', 'Path']
 
-The below command used all build history from DB.
+In case, you want to know all failed test cases and whether the covered the changes in all failed builds. In addition, it will provides information about how many times, the test cases have failed due to unrelated code changes. 
 
-      command: python show.py --type tc_all 
+      command: python3 show.py --type tc_all 
       
-      output: table ['Failed Test', 'NT-FDUC', 'Path', 'Last Failed Build ID']
+      output(csv generated in folder name "dependency_cover"): table ['Failed Test', 'NT-FDUC', 'Path', 'Last Failed Build ID']
       
       note: NT-FDUC = Number of Times, It failed due to unrelated changes in past
    
-If you want to limit the number of days, use the following command:
+In case, you want to limit the number of days, use the following command:
 
-      command: python show.py --type dc_all --days [Number Of Days]
+      command: python3 show.py --type tc_all --days [Number Of Days]
 
-       output: table ['Failed Test', 'NT-FDUC', 'Path', 'Last Failed Build ID']
+       output(csv generated in folder name "dependency_cover"): table ['Failed Test', 'NT-FDUC', 'Path', 'Last Failed Build ID']
 
 #### 2.4.5 test history
 
-show test failed history:
+This command will provides results about each each test cases in failed build during given [NumberOfDays]:
 
         command: python show.py --type test_history --days [NumberOfDays] 
         
@@ -284,39 +298,42 @@ show test failed history:
         
         output: 1. table ['Failed Test', 'Failed Times', 'Path']
        
-                2. chart
+                2. chart (The chart provides information about build distributions)
+
    example output:
    ![build history](pic/build_history.png)
    
-#### 2.4.6 test size
+#### 2.4.6 test case size
 ##### (1) show test size distribution
-      command: python show.py --type size
+The following command will provide test case size distribution. 
+
+      command: python3 show.py --type size
       
    example output:
    ![size](pic/size.png)
+
 ##### (2) show tests that their size bigger than x
-      command: python show.py --type size_bigger_than --size [x]
+      command: python3 show.py --type size_bigger_than --size [x]
       
-      output: a table ['Test Name', 'Path', 'Size']
+      output(csv generated in folder name "size"): a table ['Test Name', 'Path', 'Size']
 ##### (3) show test size between x and y
-      command: python show.py --type size_between --between [x] [y]
+
+      command: python3 show.py --type size_between --between [x] [y]
       
-      output: a table ['Test Name', 'Path', 'Size', 'Test Smells']
+      output(csv generated in folder name "size"): a table ['Test Name', 'Path', 'Size', 'Test Smells']
 
 ### 2.5 Update Data
-#### 2.5.1 update build history from Travis CI
-   Use the following command to keep the build history up to date.
-    
-    command: python update.py --update travis --p [project path] --o [project owner] --n [project name]
+
 #### 2.5.2 update build history from json file
    Use the following command to update build history from json file.
     
     command: python update.py --update json --p [project path] --j [json file path]
+    
 #### 2.5.3 update training dataset
-   Use the following command to update training dataset, when you confirm that a failed test is flaky or non-flaky,
-   you can add this test to training dataset.
+For example, when test failed and our tool marked it either flaky or non-flaky, but user re-test it and decides the opposite, we must update the "dataset.csv" file for future corrections. Run the following command. 
     
     command: python update.py --update data --id [build id] --test [test name] --label [1 or 0; 1 means flaky, 0 means non-flaky]
+
 #### 2.5.4 update multi-factor detection results
    You need to update multi-factor detection results after updating the training dataset,
    use the following command to update the results.
