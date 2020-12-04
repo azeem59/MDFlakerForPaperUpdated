@@ -71,13 +71,12 @@ The Travis build logs of the projects can be accessed through GitHub project. Fo
       --n: project under test name on github
       --l: opptional, build history in the past [NumberOfDays] days (for example, 180, 365) you want to get from Travis CI, default:0, get all the build history
 
-For example, in the URL: https://github.com/explosion/spaCy, the project owner is "explosion", the project name is "spaCy" and local path could be where you cloned the project. 
+For example, in the URL: https://github.com/apache/incubator-superset, the project owner is "apache", the project name is "incubator-superset" and local path could be where you cloned the project. 
 
 Note: use "python initialize.py --help" to get details of this command
 
 #### 2.3.2 Init from Json file
 
-NOTE[if the repo is uipdated we should run this command again]
       command: python initialize.py --i init_json --p [project_under_test_path] --j [json_file_path]
       
       --p: project under test local path
@@ -197,12 +196,10 @@ The structure of JSON file is as follows:
 get detection results and other info of one build
 
         command: python show.py --type results_id --id [build id]
-        *** If committ cannot be checkedout, add "NA or not available or cannot be checkout" in the coloum"***
         output: table ['Build ID', 'Test Name', 'Flaky or Not', 'Detection Method', 'Traceback Cover', 'Number of Smells', 'Flaky Frequency', 'Size', 'Path']
         
 get detection results and other info of a test.
 
-*** If committ cannot be checkedout, add "NA or not available or cannot be checkout" in the coloum"***
         command: python show.py --type results_test --test [test name]
         
         output: table ['Build ID', 'Test Name', 'Flaky or Not', 'Detection Method', 'Traceback Cover', 'Number of Smells', 'Flaky Frequency', 'Size', 'Path']
