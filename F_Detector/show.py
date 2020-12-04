@@ -242,8 +242,10 @@ def show_build_history(days=3600):
         y_value = []
         sum = 0
         for r in build_status:
-            if r[0] == 3 or r[0] == 4 or r[0] == 1:
+            if r[0] == 2:
                 sum += r[1]
+            elif r[0] == 3 or r[0] == 4:
+                continue
             else:
                 y_value.append(r[1])
         y_value.append(sum)
