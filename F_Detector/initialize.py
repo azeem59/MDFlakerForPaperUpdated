@@ -32,8 +32,8 @@ def save_data(builds):
 
 def initialize(p, o, n, l):
     t1 = time.time()
-    # create_tables()
-    # save_case_and_smells(p)
+    create_tables()
+    save_case_and_smells(p)
     builds = get_all_builds(o, n, l)
     save_data(builds)
     update_flaky_frequency()

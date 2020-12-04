@@ -113,8 +113,8 @@ def KNN(data_path):
     print(x_data.shape)
     # print(y_target.shape)
     indices = np.random.permutation(len(x_data))
-    x_train = x_data[indices[:-80]]
-    y_train = y_target[indices[:-80]]
+    x_train = x_data[indices[:-200]]
+    y_train = y_target[indices[:-200]]
     print(len(x_train))
     print(len(y_train))
     # print(x_train)

@@ -37,7 +37,7 @@ def update_training_data(build_id, test_method, label):
     if len(res) > 0 and label in [0, 1]:
         with open('dataset.csv', 'a', newline='') as f:
             writer = csv.writer(f)
-            factors = [test_method, build_id]
+            factors = [test_method, str(build_id)]
             for r in res[0]:
                 if r == 'F':
                     r = 0
@@ -68,7 +68,7 @@ def update_multi_factor_results():
 @click.option('--n', help='project name on github')
 @click.option('--id', type=int, help='build id')
 @click.option('--test', help='test method name')
-@click.option('--label', type=click.Choice([0, 1]), help='test method name')
+@click.option('--label', type=int, help='test method name')
 def main(update, j, p, o, n, id, test, label):
     if update == 'travis':
         update_from_Travis(p, o, n)
