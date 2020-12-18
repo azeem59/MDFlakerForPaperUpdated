@@ -639,7 +639,7 @@ def update_flaky_frequency(start_time='2000-01-01 00:00:00'):
                 temp = fh[1]
 
             # print(test[0], test[1], transitions, failed_count, float(transitions / (failed_count+2)))
-            flaky_frequency = round(transitions / (failed_count + 3), 2)
+            flaky_frequency = round(transitions / (failed_count + 2), 2)
             # print(flaky_frequency)
             update = """update failed_tests 
                         set flaky_frequency='%s'
@@ -745,7 +745,8 @@ def update_detection_result(project_path, start_time='2000-01-01 00:00:00'):
                 smell = get_test_smell_method(abs_path, test[1])
                 if size > 0:
                     if smell:
-                        smells = len(smell)
+                        for s in smell:
+                            smells += s[2]
                     else:
                         smells = 0
                     sql_size_smells = """update failed_tests set `size`='%d', smells='%d'

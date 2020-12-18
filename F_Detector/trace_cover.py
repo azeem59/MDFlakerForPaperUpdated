@@ -91,6 +91,8 @@ class BuildAnalyzer:
                                     re.findall(r'.+[0-9][:][ ]in[ ].+', line) or
                                     re.findall(r'.+[0-9][,][ ]in[ ].+', line)):
                                 test_file = re.findall(r'test_.+[.]py', line)
+                                reaesc = re.compile(r'\x1b[^m]*m')
+                                line = reaesc.sub('', line)  # remove ANSI escape code
                                 case = re.findall(r'in[ ]test_.+', line)
                                 # print(line)
                                 if test_file and case and temp_failed_test != re.split(r'[ ]', case[0])[1]:
@@ -125,8 +127,10 @@ class BuildAnalyzer:
                             self.log_with_failed_tests = log
                 except Exception as e:
                     print("error: " + str(e))
+                    print(traceback.format_exc())
             else:
                 break
+            break
 
     '''
     def get_traceback(self):

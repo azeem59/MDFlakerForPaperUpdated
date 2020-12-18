@@ -631,24 +631,16 @@ def get_size_file(file_abspath):
     return size_dic
 
 
-def get_test_smell_method(file_abspath, test_method, test_class='None'):
+def get_test_smell_method(file_abspath, test_method):
     try:
         with open(file_abspath, encoding='gb18030', errors='ignore') as f:
             root_node = ast.parse(f.read())
 
-        if test_class == 'None':
-            test_methods = get_classless_functions(root_node)
-            for method in test_methods:
-                if method[1].name == test_method:
-                    return test_smell_runner(method[1])
-
-        else:
-            test_methods = get_all_class_methods(root_node)
-            for method in test_methods:
-                if method[0] == test_class and method[1].name == test_method:
-                    return test_smell_runner(method[1])
-
-        return None  # if the test_method is not in the python file return None
+        methods = get_test_methods(root_node)
+        for method in methods:
+            if method[1].name == test_method:
+                return test_smell_runner(method[1])
+        return None
 
     except FileNotFoundError:
         print('file not found:', file_abspath)
