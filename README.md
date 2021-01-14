@@ -1,3 +1,4 @@
+[NOTE: This tool is tested on Windows. When parsing test smells from test cases on OSX, Linux, or Ubuntu, it skips some folders]
 # FlakinessDetector
 ## Workflow
 ![results](pic/system%20workflow.png) 
